@@ -1,8 +1,8 @@
 {
-  "name": "webgl-webpack-boilerplate",
+  "name": "generative-learning-art",
   "version": "1.2.0",
   "private": true,
-  "description": "a boilerplate webpack project for getting started with WebGL.",
+  "description": "Generative machine learning artwork. Maybe.",
   "scripts": {
     "build": "NODE_ENV=production webpack -p --progress --colors",
     "watch": "webpack --progress --colors --watch",
@@ -12,7 +12,7 @@
   "license": "CC-BY-4.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/daleee/webgl-webpack-boilerplate"
+    "url": ""
   },
   "devDependencies": {
     "babel-core": "^6.1.19",

@@ -30,12 +30,11 @@ module.exports = {
   resolve: {
     root: [JS_PATH, SRC_PATH],
     alias: {
-      lapack: 'shim/lapack.js'
+      lapack: 'shim/noop.js'
     }
   },
   node: {
-    fs: "empty",
-    lapack: "empty"
+    fs: "empty"
   },
   module: {
     loaders: [
