@@ -7,7 +7,7 @@ precision mediump float;
 uniform float time;
 uniform vec2 mouse;
 uniform vec2 resolution;
-const float timeMult = 0.1;
+const float timeMult = 2.;
 
 #define clamps(x) clamp(x,0.,1.)
 

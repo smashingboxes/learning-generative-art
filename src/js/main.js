@@ -61,12 +61,26 @@ function init() {
 
   // Create Program
 
-  currentProgram = createProgram( "shader.frag.glsl", "shader.vert.glsl" );
+  let fragShaderName = getParameterByName('frag') || 'shader.frag';
+  let vertShaderName = getParameterByName('vert') || 'shader.vert';
+
+  currentProgram = createProgram( `${fragShaderName}.glsl`, `${vertShaderName}.glsl` );
 
   onWindowResize();
   window.addEventListener( 'resize', onWindowResize, false );
-
 }
+
+function getParameterByName(name, url) {
+    if (!url) url = window.location.href;
+    url = url.toLowerCase(); // This is just to avoid case sensitiveness
+    name = name.replace(/[\[\]]/g, "\\$&").toLowerCase();// This is just to avoid case sensitiveness for query parameter name
+    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+        results = regex.exec(url);
+    if (!results) return null;
+    if (!results[2]) return '';
+    return decodeURIComponent(results[2].replace(/\+/g, " "));
+}
+
 
 function createProgram( vertex, fragment ) {
 
@@ -88,10 +102,10 @@ function createProgram( vertex, fragment ) {
   if ( !gl.getProgramParameter( program, gl.LINK_STATUS ) ) {
 
     console.error( "ERROR:\n" +
-    "VALIDATE_STATUS: " + gl.getProgramParameter( program, gl.VALIDATE_STATUS ) + "\n" +
-    "ERROR: " + gl.getError() + "\n\n" +
-    "- Vertex Shader -\n" + vertex + "\n\n" +
-    "- Fragment Shader -\n" + fragment );
+      "VALIDATE_STATUS: " + gl.getProgramParameter( program, gl.VALIDATE_STATUS ) + "\n" +
+      "ERROR: " + gl.getError() + "\n\n" +
+      "- Vertex Shader -\n" + vertex + "\n\n" +
+      "- Fragment Shader -\n" + fragment );
 
     return null;
 
