@@ -75,9 +75,6 @@ function createProgram( vertex, fragment ) {
   var vs = getShader(gl, vertex);
   var fs = getShader(gl, fragment);
 
-  //var vs = createShader( vertex, gl.VERTEX_SHADER );
-  //var fs = createShader( '#ifdef GL_ES\nprecision highp float;\n#endif\n\n' + fragment, gl.FRAGMENT_SHADER );
-
   if ( vs == null || fs == null ) return null;
 
   gl.attachShader( program, vs );
@@ -90,7 +87,7 @@ function createProgram( vertex, fragment ) {
 
   if ( !gl.getProgramParameter( program, gl.LINK_STATUS ) ) {
 
-    alert( "ERROR:\n" +
+    console.error( "ERROR:\n" +
     "VALIDATE_STATUS: " + gl.getProgramParameter( program, gl.VALIDATE_STATUS ) + "\n" +
     "ERROR: " + gl.getError() + "\n\n" +
     "- Vertex Shader -\n" + vertex + "\n\n" +
@@ -113,7 +110,7 @@ function createShader( src, type ) {
 
   if ( !gl.getShaderParameter( shader, gl.COMPILE_STATUS ) ) {
 
-    alert( ( type == gl.VERTEX_SHADER ? "VERTEX" : "FRAGMENT" ) + " SHADER:\n" + gl.getShaderInfoLog( shader ) );
+    console.error( ( type == gl.VERTEX_SHADER ? "VERTEX" : "FRAGMENT" ) + " SHADER:\n" + gl.getShaderInfoLog( shader ) );
     return null;
 
   }
@@ -208,7 +205,7 @@ function getShader(gl, id) {
   // See if it compiled successfully
 
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    alert("An error occurred compiling the shaders: " + gl.getShaderInfoLog(shader));
+    console.error("An error occurred compiling the shaders: " + gl.getShaderInfoLog(shader));
     return null;
   }
 
