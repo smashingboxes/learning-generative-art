@@ -1,36 +1,5 @@
 const glUtils = require('./glUtils');
-
-// http://paulirish.com/2011/requestanimationframe-for-smart-animating/
-// http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
-// requestAnimationFrame polyfill by Erik Möller. fixes from Paul Irish and Tino Zijdel
-// MIT license
-(function() {
-    var lastTime = 0;
-    var vendors = ['ms', 'moz', 'webkit', 'o'];
-    for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
-        window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
-        window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame']
-                                   || window[vendors[x]+'CancelRequestAnimationFrame'];
-    }
-
-    if (!window.requestAnimationFrame)
-        window.requestAnimationFrame = function(callback, element) {
-            var currTime = new Date().getTime();
-            var timeToCall = Math.max(0, 16 - (currTime - lastTime));
-            var id = window.setTimeout(function() { callback(currTime + timeToCall); },
-              timeToCall);
-            lastTime = currTime + timeToCall;
-            return id;
-        };
-
-    if (!window.cancelAnimationFrame)
-        window.cancelAnimationFrame = function(id) {
-            clearTimeout(id);
-        };
-}());
-
-
-
+const raf = require('./raf');
 
 var canvas,
     gl,
@@ -112,7 +81,6 @@ function createProgram( vertex, fragment ) {
   }
 
   return program;
-
 }
 
 function createShader( src, type ) {
@@ -123,18 +91,14 @@ function createShader( src, type ) {
   gl.compileShader( shader );
 
   if ( !gl.getShaderParameter( shader, gl.COMPILE_STATUS ) ) {
-
     console.error( ( type == gl.VERTEX_SHADER ? "VERTEX" : "FRAGMENT" ) + " SHADER:\n" + gl.getShaderInfoLog( shader ) );
     return null;
-
   }
 
   return shader;
-
 }
 
 function onWindowResize( event ) {
-
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
 
@@ -142,14 +106,11 @@ function onWindowResize( event ) {
   parameters.screenHeight = canvas.height;
 
   gl.viewport( 0, 0, canvas.width, canvas.height );
-
 }
 
 function animate() {
-
   requestAnimationFrame( animate );
   render();
-
 }
 
 function render() {
@@ -160,16 +121,10 @@ function render() {
 
   gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
 
-  // Load program into GPU
-
   gl.useProgram( currentProgram );
-
-  // Set values to program variables
 
   gl.uniform1f( gl.getUniformLocation( currentProgram, 'time' ), parameters.time / 1000 );
   gl.uniform2f( gl.getUniformLocation( currentProgram, 'resolution' ), parameters.screenWidth, parameters.screenHeight );
-
-  // Render geometry
 
   gl.bindBuffer( gl.ARRAY_BUFFER, buffer );
   gl.vertexAttribPointer( vertex_position, 2, gl.FLOAT, false, 0, 0 );
@@ -181,22 +136,13 @@ function render() {
 
 
 function getShader(gl, id) {
-  var shaderScript = require(`shaders/${id}`);
+  var shaderScriptFile = require(`shaders/${id}`);
 
-  // Didn't find an element with the specified ID; abort.
-  if (!shaderScript) {
+  // Didn't find shader files. Abort.
+  if (!shaderScriptFile) {
+    throw new Error(`No shader found here: shaders/${id}`);
     return null;
   }
-
-  // Walk through the source element's children, building the
-  // shader source string.
-
-
-  var theSource = shaderScript;
-  var currentChild = shaderScript.firstChild;
-
-  // Now figure out what type of shader script we have,
-  // based on its MIME type.
 
   var shader;
 
@@ -205,18 +151,12 @@ function getShader(gl, id) {
   } else if (id.match('vert')) {
     shader = gl.createShader(gl.VERTEX_SHADER);
   } else {
+    throw new Error(`Shader file must have extension of either .frag.glsl or .vert.glsl`);
     return null;  // Unknown shader type
   }
 
-  // Send the source to the shader object
-
-  gl.shaderSource(shader, theSource);
-
-  // Compile the shader program
-
+  gl.shaderSource(shader, shaderScriptFile);
   gl.compileShader(shader);
-
-  // See if it compiled successfully
 
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
     console.error("An error occurred compiling the shaders: " + gl.getShaderInfoLog(shader));
