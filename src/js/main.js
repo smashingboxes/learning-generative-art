@@ -7,6 +7,7 @@ var canvas,
     vertex_shader, fragment_shader,
     currentProgram,
     vertex_position,
+    mouse = { x: 0, y: 0 },
     parameters = {  start_time  : new Date().getTime(),
                     time        : 0,
                     screenWidth : 0,
@@ -37,6 +38,12 @@ function init() {
 
   onWindowResize();
   window.addEventListener( 'resize', onWindowResize, false );
+  window.addEventListener( 'mousemove', onMouseMove, false );
+}
+
+function onMouseMove (event) {
+  mouse.x = event.pageX;
+  mouse.y = event.pageY;
 }
 
 function getParameterByName(name, url) {
@@ -125,6 +132,7 @@ function render() {
 
   gl.uniform1f( gl.getUniformLocation( currentProgram, 'time' ), parameters.time / 1000 );
   gl.uniform2f( gl.getUniformLocation( currentProgram, 'resolution' ), parameters.screenWidth, parameters.screenHeight );
+  gl.uniform2f( gl.getUniformLocation( currentProgram, 'mouse' ), mouse.x/parameters.screenWidth, mouse.y/parameters.screenHeight );
 
   gl.bindBuffer( gl.ARRAY_BUFFER, buffer );
   gl.vertexAttribPointer( vertex_position, 2, gl.FLOAT, false, 0, 0 );
@@ -136,7 +144,7 @@ function render() {
 
 
 function getShader(gl, id) {
-  var shaderScriptFile = require(`shaders/${id}`);
+  var shaderScriptFile = require(`../shaders/${id}`);
 
   // Didn't find shader files. Abort.
   if (!shaderScriptFile) {
