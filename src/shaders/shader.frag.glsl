@@ -50,6 +50,7 @@ vec3 getDotColor (float x, float y) {
 void main( void ) {
   //vec2 uv = getUV( gl_FragCoord.xy, resolution.xy );
   //vec3 c = getDotColor( sin(uv.x-( tick() )), uv.y);
+  //gl_FragColor = vec4(c, 1.0);
   gl_FragColor = getSpace();
 }
 
