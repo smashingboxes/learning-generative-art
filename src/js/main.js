@@ -7,6 +7,7 @@ var canvas,
     vertex_shader, fragment_shader,
     currentProgram,
     vertex_position,
+    delayMouse = { x: 0, y: 0 },
     mouse = { x: 0, y: 0 },
     parameters = {  start_time  : new Date().getTime(),
                     time        : 0,
@@ -18,10 +19,13 @@ animate();
 
 function init() {
   canvas = document.getElementById( 'glcanvas' );
+  mouse.x = window.innerWidth/2;
+  mouse.y = window.innerHeight/2;
+
 
   // Initialise WebGL
 
-  gl = glUtils.setupWebGL(canvas);
+  gl = glUtils.setupWebGL(canvas, {preserveDrawingBuffer: true});
 
   // Create Vertex buffer (2 triangles)
 
@@ -42,8 +46,7 @@ function init() {
 }
 
 function onMouseMove (event) {
-  mouse.x = event.pageX;
-  mouse.y = event.pageY;
+  mouse = { x: event.pageX, y: event.pageY };
 }
 
 function getParameterByName(name, url) {
@@ -117,6 +120,9 @@ function onWindowResize( event ) {
 
 function animate() {
   requestAnimationFrame( animate );
+  delayMouse.x += (mouse.x-delayMouse.x)/16;
+  delayMouse.y += (mouse.y-delayMouse.y)/16;
+  //console.log(delayMouse, mouse);
   render();
 }
 
@@ -133,6 +139,7 @@ function render() {
   gl.uniform1f( gl.getUniformLocation( currentProgram, 'time' ), parameters.time / 1000 );
   gl.uniform2f( gl.getUniformLocation( currentProgram, 'resolution' ), parameters.screenWidth, parameters.screenHeight );
   gl.uniform2f( gl.getUniformLocation( currentProgram, 'mouse' ), mouse.x/parameters.screenWidth, (parameters.screenHeight-mouse.y)/parameters.screenHeight );
+  gl.uniform2f( gl.getUniformLocation( currentProgram, 'delayMouse' ), delayMouse.x/parameters.screenWidth, (parameters.screenHeight-delayMouse.y)/parameters.screenHeight );
 
   gl.bindBuffer( gl.ARRAY_BUFFER, buffer );
   gl.vertexAttribPointer( vertex_position, 2, gl.FLOAT, false, 0, 0 );
