@@ -25,7 +25,7 @@ function init() {
 
   // Initialise WebGL
 
-  gl = glUtils.setupWebGL(canvas, {preserveDrawingBuffer: true});
+  gl = glUtils.setupWebGL(canvas, {preserveDrawingBuffer: false});
 
   // Create Vertex buffer (2 triangles)
 

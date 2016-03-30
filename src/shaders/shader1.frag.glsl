@@ -56,6 +56,8 @@ vec3 getDotColor (vec2 loc, vec3 color, float radius, float index, vec2 mouseDif
 }
 vec2 getRotatedDistance (float angle, vec2 mouseDiff, float dist, int i, vec2 center) {
   return vec2(
+    //cos(-tick()+angle)*(dist*sin((time/10.)*float(i+1))),
+    //sin(-tick()+angle)*(dist*sin((time/10.)*float(i+1)))
     cos(tick()+angle)*(dist*(cos((float(i+1)*time/5.)+(mouseDiff.x*0.2)))),
     sin(tick()+angle)*(dist*(cos((float(i+1)*time/5.)+(mouseDiff.y*0.2))))
   ) + center;
