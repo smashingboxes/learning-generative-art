@@ -10,11 +10,13 @@ uniform vec2 delayMouse;
 uniform vec2 resolution;
 
 const float timeMult = 1.5;
-const float radius = 4.;
-const int sections = 36;
-const float travelDist = 650.;
+const float radius = 40.;
+const int sections = 8*4;
+const float travelDist = 950.;
 const float hPI = 3.141592653589793 / 2.;
 const float seed = 1.;
+const float colorVariance = 1.;
+const float colorVarianceLow = 0.4;
 
 #define clamps(x) clamp(x,0.,1.)
 #define clampy(x) clamp(x,-0.2,0.8)
@@ -50,15 +52,25 @@ float drown (float val) {
 float distanceColorClamp (vec2 xyPos, vec2 center, float radius) {
   return clamps( (resolution.x - distance( center, xyPos ) + radius) / resolution.x );
 }
-vec3 getDotColor (vec2 loc, vec3 color, float radius, float index, vec2 mouseDiff, vec2 center) {
-  float dist = drown( distanceColorClamp(loc, center, radius) );
-  return vec3( clamps(color.r+dist), clamps(color.r+dist), clamps(color.r+dist) );
-}
 vec2 getRotatedDistance (float angle, vec2 mouseDiff, float dist, int i, vec2 center) {
   return vec2(
     cos(tick()+angle)*(dist*(cos((float(i+1)*time/5.)+(mouseDiff.x*0.2)))),
     sin(tick()+angle)*(dist*(cos((float(i+1)*time/5.)+(mouseDiff.y*0.2))))
   ) + center;
+}
+vec3 getColorTweak ( float i ) {
+  if ( mod(i, 4.) <= 0.9 ) {
+    return vec3(colorVarianceLow,colorVarianceLow,colorVariance);
+  } else if ( mod(i, 3.) <= 0.9 ) {
+    return vec3(colorVarianceLow,colorVariance,colorVarianceLow);
+  } else if ( mod(i, 2.) <= 0.9 ) {
+    return vec3(colorVariance,colorVarianceLow,colorVarianceLow);
+  }
+  return vec3(0,0,0);
+}
+vec3 getDotColor (vec2 loc, vec3 color, float radius, float index, vec2 mouseDiff, vec2 center) {
+  float dist = drown( distanceColorClamp(loc, center, radius) );
+  return vec3( clamps(color.r+dist), clamps(color.g+dist), clamps(color.b+dist) ) * getColorTweak( float(index) );
 }
 void main() {
   vec2 mouseDiff = mouse - delayMouse;
