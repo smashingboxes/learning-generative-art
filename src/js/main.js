@@ -7,6 +7,7 @@ var canvas,
     vertex_shader, fragment_shader,
     currentProgram,
     vertex_position,
+    learningUniforms = generateUniforms(),
     delayMouse = { x: 0, y: 0 },
     mouse = { x: 0, y: 0 },
     parameters = {  start_time  : new Date().getTime(),
@@ -126,6 +127,22 @@ function animate() {
   render();
 }
 
+function generateUniforms () {
+  var limit = 10;
+  var _uniforms = [];
+  while ( limit-- ) {
+    _uniforms.push( { name: 'learning'+limit, val: Math.random() } );
+  }
+  console.log(_uniforms);
+  return _uniforms;
+}
+
+function useUniforms (uniforms) {
+  uniforms.forEach(function (obj) {
+    gl.uniform1f( gl.getUniformLocation( currentProgram, obj.name ), obj.val );
+  })
+}
+
 function render() {
 
   if ( !currentProgram ) return;
@@ -136,17 +153,20 @@ function render() {
 
   gl.useProgram( currentProgram );
 
-  gl.uniform1f( gl.getUniformLocation( currentProgram, 'time' ), parameters.time / 1000 );
+  learningUniforms[0].val = ((Math.sin(parameters.time / 1000) ) / 4) + .75 ;
+  useUniforms(learningUniforms);
+
+  gl.uniform1f( gl.getUniformLocation( currentProgram, 'time' ), 0.1 /* parameters.time / 1000 */ );
   gl.uniform2f( gl.getUniformLocation( currentProgram, 'resolution' ), parameters.screenWidth, parameters.screenHeight );
   gl.uniform2f( gl.getUniformLocation( currentProgram, 'mouse' ), mouse.x/parameters.screenWidth, (parameters.screenHeight-mouse.y)/parameters.screenHeight );
   gl.uniform2f( gl.getUniformLocation( currentProgram, 'delayMouse' ), delayMouse.x/parameters.screenWidth, (parameters.screenHeight-delayMouse.y)/parameters.screenHeight );
+
 
   gl.bindBuffer( gl.ARRAY_BUFFER, buffer );
   gl.vertexAttribPointer( vertex_position, 2, gl.FLOAT, false, 0, 0 );
   gl.enableVertexAttribArray( vertex_position );
   gl.drawArrays( gl.TRIANGLES, 0, 6 );
   gl.disableVertexAttribArray( vertex_position );
-
 }
 
 

@@ -1,5 +1,6 @@
-vec3 roty(vec3 p,float a)
-{ return mat3(cos(a),0,-sin(a), 0,1,0, sin(a),0,cos(a)) * p * (mouse.x + .5); }
+vec3 roty(vec3 p,float a) {
+  return mat3(cos(a),0,-sin(a), 0,1,0, sin(a),0,cos(a)) * p * (mouse.x + .5);
+}
 
 float map(in vec3 p)
 {

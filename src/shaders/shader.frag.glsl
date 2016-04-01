@@ -8,92 +8,75 @@ uniform float time;
 uniform vec2 mouse;
 uniform vec2 delayMouse;
 uniform vec2 resolution;
+uniform float learning0;
+uniform float learning1;
+uniform float learning2;
+uniform float learning3;
+uniform float learning4;
+uniform float learning5;
+uniform float learning6;
+uniform float learning7;
+uniform float learning8;
+uniform float learning9;
 
-const float timeMult = 1.5;
-const float radius = 40.;
-const int sections = 8*4;
-const float travelDist = 950.;
-const float hPI = 3.141592653589793 / 2.;
-const float seed = 1.;
-const float colorVariance = 1.;
-const float colorVarianceLow = 0.4;
+vec3 roty(vec3 p,float a) {
+  return mat3(cos(a),0,-sin(a), 0,1,0, sin(a),0,cos(a)) * p * (learning2 + learning3);
+}
 
-#define clamps(x) clamp(x,0.,1.)
-#define clampy(x) clamp(x,-0.2,0.8)
-
-@import ./includes/noise2D;
-@import ./includes/glowing-space;
-
-
-//perlin's value noise
-float noise (in vec2 uv) {
-  return snoise(uv);          //top to bottom
-}
-float rand(vec2 co){
-    return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453)*seed;
-}
-vec2 getUV ( vec2 fragCoord, vec2 res ) {
-  vec2 uv = ( gl_FragCoord.xy / resolution.xy );
-  uv -= 0.5;
-  return uv;
-}
-float getAngle (float x, float y) {
-  return atan(x,y);
-}
-float tick () {
-  return time*timeMult;
-}
-bool isInside (float val, float btm, float top) {
-  return ( val > btm && val < top );
-}
-float drown (float val) {
-  return pow(val, 64.);
-}
-float distanceColorClamp (vec2 xyPos, vec2 center, float radius) {
-  return clamps( (resolution.x - distance( center, xyPos ) + radius) / resolution.x );
-}
-vec2 getRotatedDistance (float angle, vec2 mouseDiff, float dist, int i, vec2 center) {
-  return vec2(
-    cos(tick()+angle)*(dist*(cos((float(i+1)*time/5.)+(mouseDiff.x*0.2)))),
-    sin(tick()+angle)*(dist*(cos((float(i+1)*time/5.)+(mouseDiff.y*0.2))))
-  ) + center;
-}
-vec3 getColorTweak ( float i ) {
-  if ( mod(i, 4.) <= 0.9 ) {
-    return vec3(colorVarianceLow,colorVarianceLow,colorVariance);
-  } else if ( mod(i, 3.) <= 0.9 ) {
-    return vec3(colorVarianceLow,colorVariance,colorVarianceLow);
-  } else if ( mod(i, 2.) <= 0.9 ) {
-    return vec3(colorVariance,colorVarianceLow,colorVarianceLow);
+float map(in vec3 p)
+{
+  float muscle0 = -(32. * learning9);
+  float muscle1 = -(3. * learning8);
+  vec3 c=p; float res=0.;
+  for (int i=0; i < 7; i++)
+  {
+    p= abs(p)/dot(p,p) -learning8;
+    p.yz= vec2(p.y*p.y-p.z*p.z,muscle1*p.y*p.z);
+    res += exp(muscle0 / learning8 * abs(dot(p,c)));
   }
-  return vec3(0,0,0);
+  return res * ((sin(1.)+1.)/(muscle1*learning7))*(learning3+1.)*(learning2+1.);
 }
-vec3 getDotColor (vec2 loc, vec3 color, float radius, float index, vec2 mouseDiff, vec2 center) {
-  float dist = drown( distanceColorClamp(loc, center, radius) );
-  return vec3( clamps(color.r+dist), clamps(color.g+dist), clamps(color.b+dist) ) * getColorTweak( float(index) );
+
+vec3 raymarch(vec3 ro, vec3 rd)
+{
+  float t=4.0;
+  vec3 col=vec3(0);
+  float c=0.;
+  float timeclamp = clamp( (learning8-0.5), 0., 1.);
+  float muscle0 = 2.2 * learning0 * 2.;
+  float muscle1 = 1.9 * learning1 * 2.;
+  float muscle2 = 1.0 * learning2 * 2.;
+  float muscle3 = 8.0 * learning3 * 2.;
+  float muscle4 = 5.5 * learning4 * 2.;
+  float muscle5 = 6.0 * learning5 * 2.;
+  float muscle6 = 2.0 * learning0 * 2.;
+
+  float baseline = 8.0 * learning4 * learning5 * 4.;
+
+  for( int i=0; i < 20; i++ )
+  {
+    if ( i < int(20.*learning0)+3 ) {
+      t+= exp(c*-(learning1*3.*learning2)) * 0.012;
+      c= map(t *rd +ro);
+      col= vec3(baseline*c*c, c, muscle5*c*c*c) *learning4 + col * ((sin(time*timeclamp*muscle0)+muscle4)/muscle3); //green
+      col= vec3(baseline*c*c*c, muscle6*c*c, c) *learning5 + col * ((cos(time*.1)+muscle1*learning7)/muscle6); //blue
+      col= vec3(baseline*c, c*c*c, c*c) *learning6 + col * ((sin(learning3*1.)+muscle2)+.1/learning5); //red
+    }
+  }
+  return col;
 }
+
+vec4 getSpace() {
+  vec2 p= (gl_FragCoord.xy - resolution*0.5) / resolution.y;
+  vec3 ro= roty(vec3(3.), time*0.2 + learning2);
+  vec3 uu= normalize(cross(ro, vec3(1.0, .0, 0.0)));
+  vec3 vv= normalize(cross(uu, ro));
+  vec3 rd= normalize(p.x*uu + p.y*vv - ro*0.5 );
+  return vec4( log(raymarch(ro,rd) +1.0)*0.5, 1.0 );
+}
+
 void main() {
-  vec2 mouseDiff = mouse - delayMouse;
-  vec2 center = ( delayMouse ) * resolution;
-  vec3 baseColor = vec3(0,0,0); //vec3( clampy(sin(time/1.)*0.13), clampy(sin(time/3.)*0.13), clampy(sin(time/8.)*0.13) );
-  float dist = (sin(time)*travelDist);
-  float _radius = radius*((sin(time)*1.5)+1.5);
-  vec3 finalColor = vec3(0,0,0);
-
-  finalColor = finalColor + getDotColor(gl_FragCoord.xy, baseColor, _radius, float(0), mouseDiff, center);
-
-  for ( int i = 0; i < sections; i++ ) {
-    float angle = (float(i)*hPI*4.)/float(sections);
-    finalColor = finalColor + (getDotColor(
-      gl_FragCoord.xy,
-      baseColor,
-      _radius,
-      float(i),
-      mouseDiff,
-      getRotatedDistance(angle, mouseDiff, dist, i, center)
-    ));
-  }
-  gl_FragColor = vec4( finalColor, 1);
+  gl_FragColor =  getSpace();
 }
 
 
