@@ -24,6 +24,7 @@
     "webpack-glsl-loader": "^1.0.1"
   },
   "dependencies": {
+    "convnetjs": "^0.3.0",
     "script-loader": "^0.6.1",
     "sylvester": "0.0.21"
   }

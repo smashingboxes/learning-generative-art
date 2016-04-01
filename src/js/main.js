@@ -1,12 +1,16 @@
-const glUtils = require('./glUtils');
-const raf = require('./raf');
-
 var canvas,
     gl,
     buffer,
     vertex_shader, fragment_shader,
     currentProgram,
     vertex_position,
+
+    $ = function (sel) {
+      return document.querySelector(sel);
+    },
+    $$ = function (sel) {
+      return document.querySelectorAll(sel);
+    },
     learningUniforms = generateUniforms(),
     delayMouse = { x: 0, y: 0 },
     mouse = { x: 0, y: 0 },
@@ -14,6 +18,15 @@ var canvas,
                     time        : 0,
                     screenWidth : 0,
                     screenHeight: 0 };
+
+window.learningUniforms = learningUniforms;
+window.rewards = {
+  merit: 1,
+  demerit: 1,
+}
+
+const glUtils = require('./glUtils');
+const artist = require('./artist');
 
 init();
 animate();
@@ -44,6 +57,13 @@ function init() {
   onWindowResize();
   window.addEventListener( 'resize', onWindowResize, false );
   window.addEventListener( 'mousemove', onMouseMove, false );
+
+  $('.merit').addEventListener('click', function () {
+    rewards.merit++;
+  }, false);
+  $('.demerit').addEventListener('click', function () {
+    rewards.demerit++;
+  }, false);
 }
 
 function onMouseMove (event) {

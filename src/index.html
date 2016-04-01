@@ -9,10 +9,45 @@
         background-color: #000000;
         margin: 0px;
         overflow: hidden;
+        position: relative;
+      }
+      .learningnav {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+      }
+      .learningnav button {
+        font-size: 100px;
+        width: 2em;
+        height: 2em;
+        background-color: rgba(0,0,0,0.5);
+        color: white;
+        display: block;
+        float: left;
+        border: 0 none;
+        cursor: pointer;
+        -webkit-transition: color 300ms, background-color 300ms;
+        -moz-transition: color 300ms, background-color 300ms;
+        -ms-transition: color 300ms, background-color 300ms;
+        -o-transition: color 300ms, background-color 300ms;
+        transition: color 300ms, background-color 300ms;
+        outline: 0;
+      }
+      .learningnav button:hover {
+        background-color: rgba(255,255,255,0.5);
+        color: black;
+      }
+      button.merit {
+        float: right;
       }
     </style>
   </head>
   <body>
     <canvas id="glcanvas"></canvas>
+    <nav class="learningnav">
+      <button class="demerit">-</button>
+      <button class="merit">+</button>
+    </nav>
   </body>
 </html>
