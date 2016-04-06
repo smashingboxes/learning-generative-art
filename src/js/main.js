@@ -11,7 +11,6 @@ var canvas,
     $$ = function (sel) {
       return document.querySelectorAll(sel);
     },
-    learningUniforms = generateUniforms(),
     delayMouse = { x: 0, y: 0 },
     mouse = { x: 0, y: 0 },
     parameters = {  start_time  : new Date().getTime(),
@@ -19,7 +18,6 @@ var canvas,
                     screenWidth : 0,
                     screenHeight: 0 };
 
-window.learningUniforms = learningUniforms;
 window.rewards = {
   merit: 1,
   demerit: 1,
@@ -58,14 +56,17 @@ function init() {
   window.addEventListener( 'resize', onWindowResize, false );
   window.addEventListener( 'mousemove', onMouseMove, false );
 
-  $('.merit').addEventListener('click', function () {
-    rewards.merit++;
-  }, false);
-  $('.demerit').addEventListener('click', function () {
-    rewards.demerit++;
-  }, false);
+  $('.merit').addEventListener('click', increaseMerit('merit'), false);
+  $('.merit').addEventListener('mouseout', resetMerit('merit'), false);
+  $('.demerit').addEventListener('click', increaseMerit('demerit'), false);
+  $('.demerit').addEventListener('mouseout', resetMerit('demerit'), false);
 }
-
+function increaseMerit (key) {
+  return function () { rewards[key]++; }
+}
+function resetMerit (key) {
+  return function () { rewards[key]++; }
+}
 function onMouseMove (event) {
   mouse = { x: event.pageX, y: event.pageY };
 }
@@ -147,16 +148,6 @@ function animate() {
   render();
 }
 
-function generateUniforms () {
-  var limit = 10;
-  var _uniforms = [];
-  while ( limit-- ) {
-    _uniforms.push( { name: 'learning'+limit, val: Math.random() } );
-  }
-  console.log(_uniforms);
-  return _uniforms;
-}
-
 function useUniforms (uniforms) {
   uniforms.forEach(function (obj) {
     gl.uniform1f( gl.getUniformLocation( currentProgram, obj.name ), obj.val );
@@ -173,7 +164,7 @@ function render() {
 
   gl.useProgram( currentProgram );
 
-  learningUniforms[0].val = ((Math.sin(parameters.time / 1000) ) / 4) + .75 ;
+  //learningUniforms[0].val = ((Math.sin(parameters.time / 1000) ) / 4) + .75 ;
   useUniforms(learningUniforms);
 
   gl.uniform1f( gl.getUniformLocation( currentProgram, 'time' ), 0.1 /* parameters.time / 1000 */ );

@@ -1,8 +1,10 @@
-(function (window) {
+(function (window, document) {
+
+window.learningUniforms = generateUniforms();
 
 var deepqlearn = require("deepqlearn");
 var num_inputs = 1; // 9 eyes, each sees 3 numbers (wall, green, red thing proximity)
-var num_actions = 10; // 5 possible angles agent can turn
+var num_actions = getActions().length; // 5 possible angles agent can turn
 var temporal_window = 1; // amount of temporal memory. 0 = agent lives in-the-moment :)
 var network_size = num_inputs*temporal_window + num_actions*temporal_window + num_inputs;
 
@@ -33,16 +35,64 @@ opt.layer_defs = layer_defs;
 opt.tdtrainer_options = tdtrainer_options;
 
 var brain = new deepqlearn.Brain(num_inputs, num_actions, opt); // woohoo
+
+function generateUniforms () {
+  var limit = 10;
+  var _uniforms = [];
+  while ( limit-- ) {
+    _uniforms.push( { name: 'learning'+limit, index: limit, val: Math.random() } );
+  }
+  console.log(_uniforms);
+  return _uniforms;
+}
+
+function getActions () {
+  return window.learningUniforms.reduce(function (result, current, index) {
+    result.push( (function () {
+      //Decrement a little
+      this.val -= 0.00001;
+      return this;
+    }).bind(current) );
+
+    result.push( (function () {
+      //Increment a little
+      this.val += 0.00001;
+      return this;
+    }).bind(current) );
+
+    result.push( (function () {
+      //Decrement a lot
+      this.val -= 0.01;
+      return this;
+    }).bind(current) );
+
+    result.push( (function () {
+      //Increment a lot
+      this.val += 0.01;
+      return this;
+    }).bind(current) );
+
+    return result;
+  }, [function () {
+    //no action
+  }, function () {
+    window.learningUniforms = generateUniforms();
+  }]);
+}
+
 function learnToPaint () {
-  //requestAnimationFrame(learnToPaint);
-  var action = brain.forward(window.learningUniforms.map(function (uni) {
-    return uni.val;
-  }));
-  console.log(action);
-  // action is a number in [0, num_actions) telling index of the action the agent chooses
-  // here, apply the action on environment and observe some reward. Finally, communicate it:
-  brain.backward( window.rewards.merit/window.rewards.demerit ); // <-- learning magic happens here
+  requestAnimationFrame(learnToPaint);
+    var action = brain.forward(window.learningUniforms.map(function (uni) {
+      return uni.val;
+    }));
+    // action is a number in [0, num_actions) telling index of the action the agent chooses
+    getActions()[action]();
+    // here, apply the action on environment and observe some reward. Finally, communicate it:
+    var r = brain.backward( window.rewards.merit/window.rewards.demerit ); // <-- learning magic happens here
+    window.rewards.merit /= 10;
+    window.rewards.demerit /= 10;
+    console.log(window.rewards.merit, window.rewards.demerit);
 }
 learnToPaint();
 
-})(window);
+})(window, document);
