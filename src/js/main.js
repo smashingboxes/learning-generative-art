@@ -57,15 +57,17 @@ function init() {
   window.addEventListener( 'mousemove', onMouseMove, false );
 
   $('.merit').addEventListener('click', increaseMerit('merit'), false);
+  $('.merit').addEventListener('mouseover', increaseMerit('merit'), false);
   $('.merit').addEventListener('mouseout', resetMerit('merit'), false);
   $('.demerit').addEventListener('click', increaseMerit('demerit'), false);
+  $('.demerit').addEventListener('mouseover', increaseMerit('demerit'), false);
   $('.demerit').addEventListener('mouseout', resetMerit('demerit'), false);
 }
 function increaseMerit (key) {
-  return function () { rewards[key]++; }
+  return function () { rewards[key]+=2; }
 }
 function resetMerit (key) {
-  return function () { rewards[key]++; }
+  return function () { rewards[key]=0; }
 }
 function onMouseMove (event) {
   mouse = { x: event.pageX, y: event.pageY };

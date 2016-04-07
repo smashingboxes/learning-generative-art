@@ -76,7 +76,9 @@ function getActions () {
   }, [function () {
     //no action
   }, function () {
-    window.learningUniforms = generateUniforms();
+    window.learningUniforms.each(function (uni) {
+      uni.val += 0.01;
+    })
   }]);
 }
 
@@ -88,10 +90,10 @@ function learnToPaint () {
     // action is a number in [0, num_actions) telling index of the action the agent chooses
     getActions()[action]();
     // here, apply the action on environment and observe some reward. Finally, communicate it:
-    var r = brain.backward( window.rewards.merit/window.rewards.demerit ); // <-- learning magic happens here
-    window.rewards.merit /= 10;
-    window.rewards.demerit /= 10;
-    console.log(window.rewards.merit, window.rewards.demerit);
+    var r = brain.backward( window.rewards.merit-window.rewards.demerit ); // <-- learning magic happens here
+    window.rewards.merit *= 0.9;
+    window.rewards.demerit *= 0.9;
+    console.log(window.rewards.merit - window.rewards.demerit);
 }
 learnToPaint();
 
