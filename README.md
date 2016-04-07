@@ -1,8 +1,6 @@
-# GLSL Shader (WebGL) Boilerplate
+# Machine Learning Generative Art
 
-This is a boilerplate setup using webpack and babel to edit GLSL Shaders in the brower (comes with live reload thanks to webpack dev server).
-
-Shaders are located in /src/shaders
+TODO: Docs and moar dev.
 
 ## Usage
 #### `npm run build`
