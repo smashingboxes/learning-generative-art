@@ -1,4 +1,4 @@
-# Machine Learning Generative Art
+# Machine Learning + Generative Art
 
 TODO: Docs and moar dev.
 
