@@ -1,0 +1,36 @@
+#!/usr/local/bin/node
+'use strict';
+const spawn = require('child_process').spawn;
+const commands = ['npm run serve', 'npm run devserver', 'npm run build'];
+
+let procs = [];
+
+commands.forEach( (cmd) => {
+  let proc = spawn(cmd);
+  procs.push( proc );
+
+  proc.on('error', (error) => {
+    console.log(`error ${error}`);
+  })
+
+  proc.stdout.on('data', (data) => {
+    console.log(`stdout: ${data}`);
+  });
+
+  proc.stderr.on('data', (data) => {
+    console.log(`stderr: ${data}`);
+  });
+
+  proc.on('close', (code) => {
+    console.log(`child process exited with code ${code}`);
+  });
+});
+
+
+process.on('exit', () => {
+  procs.forEach( (proc) => {
+    proc.kill();
+  });
+});
+
+

@@ -62,28 +62,25 @@ function getActions () {
 
     result.push( (function () {
       //Decrement a lot
-      this.val -= 0.01;
+      this.val -= 0.1;
       return this;
     }).bind(current) );
 
     result.push( (function () {
       //Increment a lot
-      this.val += 0.01;
+      this.val += 0.1;
       return this;
     }).bind(current) );
 
     return result;
   }, [function () {
     //no action
-  }, function () {
-    window.learningUniforms.each(function (uni) {
-      uni.val += 0.01;
-    })
+    //noop
   }]);
 }
 
 function learnToPaint () {
-  requestAnimationFrame(learnToPaint);
+  //requestAnimationFrame(learnToPaint);
     var action = brain.forward(window.learningUniforms.map(function (uni) {
       return uni.val;
     }));
@@ -95,6 +92,6 @@ function learnToPaint () {
     window.rewards.demerit *= 0.9;
     console.log(window.rewards.merit - window.rewards.demerit);
 }
-learnToPaint();
+//learnToPaint();
 
 })(window, document);

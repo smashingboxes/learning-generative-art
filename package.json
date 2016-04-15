@@ -5,10 +5,12 @@
   "description": "Generative machine learning artwork. Maybe.",
   "scripts": {
     "build": "NODE_ENV=production webpack -p --progress --colors",
+    "serve": "node ./server/server.js",
     "watch": "webpack --progress --colors --watch",
-    "dev": "webpack-dev-server --content-base dist/ --colors --hot --inline"
+    "devserver": "webpack-dev-server --content-base dist/ --colors --hot --inline",
+    "dev": "./bin/dev"
   },
-  "author": "Dale Karp <dale@dale.io> (http://dale.io)",
+  "author": "Keegan Brown for Smashing Boxes",
   "license": "CC-BY-4.0",
   "repository": {
     "type": "git",
@@ -24,7 +26,10 @@
     "webpack-glsl-loader": "^1.0.1"
   },
   "dependencies": {
+    "body-parser": "^1.15.0",
     "convnetjs": "^0.3.0",
+    "express": "^4.13.4",
+    "redis": "^2.6.0-1",
     "script-loader": "^0.6.1",
     "sylvester": "0.0.21"
   }
