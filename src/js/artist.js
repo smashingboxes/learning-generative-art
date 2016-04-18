@@ -1,5 +1,12 @@
 (function (window, document) {
 
+var fetch = window.fetch || require('whatwg-fetch');
+var Promise = Promise || require('es6-promise');
+
+var ROOT = location.origin.replace('8080','3333');
+
+console.log(fetch, Promise);
+
 window.learningUniforms = generateUniforms();
 
 var deepqlearn = require("deepqlearn");
@@ -50,13 +57,13 @@ function getActions () {
   return window.learningUniforms.reduce(function (result, current, index) {
     result.push( (function () {
       //Decrement a little
-      this.val -= 0.00001;
+      this.val -= 0.001;
       return this;
     }).bind(current) );
 
     result.push( (function () {
       //Increment a little
-      this.val += 0.00001;
+      this.val += 0.001;
       return this;
     }).bind(current) );
 
@@ -79,18 +86,60 @@ function getActions () {
   }]);
 }
 
+window.addEventListener('learn', function () {
+  console.log('learn!');
+  learnToPaint();
+}, false);
+
+fetch(ROOT+'/brain/brain.json')
+  .then(checkStatus)
+  .then(parseJSON)
+  .then(function (data) {
+    console.log(data);
+    brain.value_net.fromJSON( data ) //LOAD BRAIN;
+  })
+  .catch(function (err) {
+    console.log(err);
+  });
+
+function checkStatus(response) {
+  if (response.status >= 200 && response.status < 300) {
+    return response
+  } else {
+    var error = new Error(response.statusText)
+    error.response = response
+    throw error
+  }
+}
+
+function parseJSON(response) {
+  return response.json()
+}
+
 function learnToPaint () {
   //requestAnimationFrame(learnToPaint);
-    var action = brain.forward(window.learningUniforms.map(function (uni) {
-      return uni.val;
-    }));
-    // action is a number in [0, num_actions) telling index of the action the agent chooses
-    getActions()[action]();
-    // here, apply the action on environment and observe some reward. Finally, communicate it:
-    var r = brain.backward( window.rewards.merit-window.rewards.demerit ); // <-- learning magic happens here
-    window.rewards.merit *= 0.9;
-    window.rewards.demerit *= 0.9;
-    console.log(window.rewards.merit - window.rewards.demerit);
+  var action = brain.forward(window.learningUniforms.map(function (uni) {
+    return uni.val;
+  }));
+
+  console.log( brain.value_net.toJSON() );
+  // action is a number in [0, num_actions) telling index of the action the agent chooses
+  getActions()[action]();
+  // here, apply the action on environment and observe some reward. Finally, communicate it:
+  var r = brain.backward( window.rewards.merit-window.rewards.demerit ); // <-- learning magic happens here
+
+  fetch(ROOT+'/memory', {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(brain.value_net.toJSON())
+  });
+
+  window.rewards.merit *= 0.9;
+  window.rewards.demerit *= 0.9;
+  console.log(window.rewards.merit - window.rewards.demerit);
 }
 //learnToPaint();
 

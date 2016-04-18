@@ -1,12 +1,16 @@
 #!/usr/local/bin/node
 'use strict';
-const spawn = require('child_process').spawn;
-const commands = ['npm run serve', 'npm run devserver', 'npm run build'];
+const exec = require('child_process').exec;
+const commands = [
+  'NODE_ENV=production webpack -p --progress --colors',
+  'node ./server/server.js',
+  'webpack-dev-server --content-base dist/ --colors --hot --inline'
+];
 
 let procs = [];
 
 commands.forEach( (cmd) => {
-  let proc = spawn(cmd);
+  let proc = exec(cmd);
   procs.push( proc );
 
   proc.on('error', (error) => {
@@ -29,6 +33,7 @@ commands.forEach( (cmd) => {
 
 process.on('exit', () => {
   procs.forEach( (proc) => {
+    console.log('Killing: ', proc);
     proc.kill();
   });
 });
