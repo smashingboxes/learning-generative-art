@@ -78,13 +78,19 @@
     $('.merit').addEventListener('click', increaseMerit('merit'), false);
     $('.merit').addEventListener('mouseover', increaseMerit('merit'), false);
     $('.merit').addEventListener('mouseout', resetMerit('merit'), false);
-    $('.demerit').addEventListener('click', increaseMerit('demerit'), false);
-    $('.demerit').addEventListener('mouseover', increaseMerit('demerit'), false);
-    $('.demerit').addEventListener('mouseout', resetMerit('demerit'), false);
+    $('.demerit').addEventListener('click', decreaseMerit('merit'), false);
+    $('.demerit').addEventListener('mouseover', decreaseMerit('merit'), false);
+    $('.demerit').addEventListener('mouseout', resetMerit('merit'), false);
   }
   function increaseMerit (key) {
     return function () {
       rewards[key]+=2;
+      window.dispatchEvent(new Event('learn'));
+    }
+  }
+  function decreaseMerit (key) {
+    return function () {
+      rewards[key]-=1;
       window.dispatchEvent(new Event('learn'));
     }
   }

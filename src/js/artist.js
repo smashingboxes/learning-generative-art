@@ -94,13 +94,15 @@ window.addEventListener('learn', function () {
 fetch(ROOT+'/brain/brain.json')
   .then(checkStatus)
   .then(parseJSON)
-  .then(function (data) {
-    console.log(data);
-    brain.value_net.fromJSON( data ) //LOAD BRAIN;
-  })
+  .then(loadBrainFromJSON)
   .catch(function (err) {
     console.log(err);
   });
+
+function loadBrainFromJSON (data) {
+  console.log(data);
+  brain.value_net.fromJSON( data ) //LOAD BRAIN;
+}
 
 function checkStatus(response) {
   if (response.status >= 200 && response.status < 300) {
@@ -126,20 +128,21 @@ function learnToPaint () {
   // action is a number in [0, num_actions) telling index of the action the agent chooses
   getActions()[action]();
   // here, apply the action on environment and observe some reward. Finally, communicate it:
-  var r = brain.backward( window.rewards.merit-window.rewards.demerit ); // <-- learning magic happens here
+  var r = brain.backward( window.rewards.merit ); // <-- learning magic happens here
 
   fetch(ROOT+'/memory', {
-    method: 'POST',
-    headers: {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(brain.value_net.toJSON())
-  });
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(brain.value_net.toJSON())
+    })
+    .then(checkStatus)
+    .then(parseJSON)
+    .then(loadBrainFromJSON);
 
-  window.rewards.merit *= 0.9;
-  window.rewards.demerit *= 0.9;
-  console.log(window.rewards.merit - window.rewards.demerit);
+  console.log(window.rewards.merit);
 }
 //learnToPaint();
 

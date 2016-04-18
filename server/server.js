@@ -9,18 +9,19 @@ const PUBLIC_BRAIN = __dirname + '/../brain';
 
 app.use(bodyParser.json({limit: '50mb'}));
 app.use('/', express.static( PUBLIC ));
+
 app.use('/brain', express.static( PUBLIC_BRAIN, {
     setHeaders: function (res, path, stat) {
       //res.headers = res.headers || {};
       res.set('Access-Control-Allow-Origin', '*');
-      console.log(res._headers);
     }
   }));
 
-app.use('/memory', function (req, res, next) {
+app.use('/memory', function(req, res, next) {
   res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
   next();
-})
+});
 
 app.get('/', function (req, res) {
   res.sendFile(`${PUBLIC}/index.html`);
