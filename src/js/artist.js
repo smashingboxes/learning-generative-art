@@ -118,13 +118,27 @@ function parseJSON(response) {
   return response.json()
 }
 
+var justPaintCycles = 100;
+function justPaint () {
+  if ( !(--justPaintCycles) ) return;
+  requestAnimationFrame(justPaint);
+  var action = brain.forward(window.learningUniforms.map(function (uni) {
+    return uni.val;
+  }));
+  getActions()[action]();
+}
+justPaint();
+
+var learnLock = false;
 function learnToPaint () {
-  //requestAnimationFrame(learnToPaint);
+  if (learnLock) {
+    return;
+  }
+  learnLock = true;
   var action = brain.forward(window.learningUniforms.map(function (uni) {
     return uni.val;
   }));
 
-  console.log( brain.value_net.toJSON() );
   // action is a number in [0, num_actions) telling index of the action the agent chooses
   getActions()[action]();
   // here, apply the action on environment and observe some reward. Finally, communicate it:
@@ -140,7 +154,12 @@ function learnToPaint () {
     })
     .then(checkStatus)
     .then(parseJSON)
-    .then(loadBrainFromJSON);
+    .then(loadBrainFromJSON)
+    .then(function () {
+      learnLock = false;
+      justPaintCycles = 100;
+      justPaint();
+    });
 
   console.log(window.rewards.merit);
 }

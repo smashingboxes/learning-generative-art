@@ -44,7 +44,7 @@
     mouse.x = window.innerWidth/2;
     mouse.y = window.innerHeight/2;
 
-    gl = glUtils.setupWebGL(canvas, {preserveDrawingBuffer: false});
+    gl = glUtils.setupWebGL(canvas, {preserveDrawingBuffer: true});
 
     // THINK ABOUT A LARGER VERTEX BUFFER
     buffer = gl.createBuffer();

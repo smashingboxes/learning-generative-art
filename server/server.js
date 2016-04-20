@@ -27,10 +27,10 @@ app.get('/', function (req, res) {
   res.sendFile(`${PUBLIC}/index.html`);
 });
 app.post('/memory', function (req, res) {
-  console.log(res._headers);
+  //console.log(JSON.stringify(req.body));
   fs.writeFile('brain/brain.json', JSON.stringify(req.body), (err) => {
     if (err) throw err;
-    console.log('It\'s saved!');
+    console.log('It\'s saved!', Date.now());
   });
   res.send(req.body);
 });
