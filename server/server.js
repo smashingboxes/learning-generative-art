@@ -3,7 +3,7 @@ const redis = require('redis');
 const bodyParser = require('body-parser');
 const fs = require('fs');
 const app = express();
-const PORT = 3333;
+const PORT = 3210;
 const PUBLIC = __dirname + '/../dist';
 const PUBLIC_BRAIN = __dirname + '/../brain';
 
