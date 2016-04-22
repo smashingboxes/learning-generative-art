@@ -10,44 +10,31 @@
         margin: 0px;
         overflow: hidden;
         position: relative;
+        font-family: sans-serif;
+        font-weight: 100;
       }
-      .learningnav {
+      .messages {
         position: absolute;
         bottom: 0;
         left: 0;
         width: 100%;
+        background-color: rgba(0,0,0,0.3);
+        padding: 20px;
+        box-sizing: border-box;
       }
-      .learningnav button {
-        font-size: 100px;
-        width: 15vh;
-        height: 15vh;
-        background-color: rgba(0,0,0,0.5);
+      .messages h2 {
+        font-size: 20px;
         color: white;
         display: block;
-        float: left;
-        border: 0 none;
-        cursor: pointer;
-        -webkit-transition: color 300ms, background-color 300ms;
-        -moz-transition: color 300ms, background-color 300ms;
-        -ms-transition: color 300ms, background-color 300ms;
-        -o-transition: color 300ms, background-color 300ms;
-        transition: color 300ms, background-color 300ms;
-        outline: 0;
-      }
-      .learningnav button:hover {
-        background-color: rgba(255,255,255,0.5);
-        color: black;
-      }
-      button.merit {
-        float: right;
       }
     </style>
   </head>
   <body>
     <canvas id="glcanvas"></canvas>
-    <nav class="learningnav">
-      <button class="demerit">-</button>
-      <button class="merit">+</button>
-    </nav>
+    <section class="messages">
+      <h2 id="intro">Hi! I'm a Neural Network that is learing how to paint. Tap your up arrow key to tell me if you like what I drew. Tap the down key if you don&rsquo;t. PS. I don't place nice with Retina Screens.</h2>
+      <h2 id="wait">One second &ndash; I need to think about this.</h2>
+      <h2 id="again">How about this? Tap the up arrow key if you like it, and the down if you don&rsquo;t.</h2>
+    </section>
   </body>
 </html>

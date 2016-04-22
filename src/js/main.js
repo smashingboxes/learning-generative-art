@@ -45,6 +45,7 @@
     mouse.y = window.innerHeight/2;
 
     gl = glUtils.setupWebGL(canvas, {preserveDrawingBuffer: true});
+    window.gl = gl;
 
     // THINK ABOUT A LARGER VERTEX BUFFER
     buffer = gl.createBuffer();
@@ -74,17 +75,10 @@
         resetMerit('merit')();
       }
     });
-
-    $('.merit').addEventListener('click', increaseMerit('merit'), false);
-    $('.merit').addEventListener('mouseover', increaseMerit('merit'), false);
-    $('.merit').addEventListener('mouseout', resetMerit('merit'), false);
-    $('.demerit').addEventListener('click', decreaseMerit('merit'), false);
-    $('.demerit').addEventListener('mouseover', decreaseMerit('merit'), false);
-    $('.demerit').addEventListener('mouseout', resetMerit('merit'), false);
   }
   function increaseMerit (key) {
     return function () {
-      rewards[key]+=2;
+      rewards[key]+=5;
       window.dispatchEvent(new Event('learn'));
     }
   }
@@ -219,7 +213,6 @@
 
     return shader;
   }
-
 
   function render() {
 

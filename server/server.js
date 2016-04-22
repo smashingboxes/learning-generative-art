@@ -30,7 +30,7 @@ app.post('/memory', function (req, res) {
   //console.log(JSON.stringify(req.body));
   fs.writeFile('brain/brain.json', JSON.stringify(req.body), (err) => {
     if (err) throw err;
-    console.log('It\'s saved!', Date.now());
+    console.log('Brain Has Been Saved', JSON.stringify(req.body).length);
   });
   res.send(req.body);
 });

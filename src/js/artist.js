@@ -1,19 +1,22 @@
 (function (window, document) {
 
-var fetch = window.fetch || require('whatwg-fetch');
-var Promise = Promise || require('es6-promise');
+const fetch = window.fetch || require('whatwg-fetch');
+const Promise = Promise || require('es6-promise');
 
-var ROOT = location.origin.replace('8080','3333');
+const ROOT = location.origin.replace('8080','3210');
 
 console.log(fetch, Promise);
 
 window.learningUniforms = generateUniforms();
-
 var deepqlearn = require("deepqlearn");
-var num_inputs = 1; // 9 eyes, each sees 3 numbers (wall, green, red thing proximity)
-var num_actions = getActions().length; // 5 possible angles agent can turn
-var temporal_window = 1; // amount of temporal memory. 0 = agent lives in-the-moment :)
-var network_size = num_inputs*temporal_window + num_actions*temporal_window + num_inputs;
+
+const num_inputs = 1; // 9 eyes, each sees 3 numbers (wall, green, red thing proximity)
+const num_actions = getActions().length; // 5 possible angles agent can turn
+const temporal_window = 1; // amount of temporal memory. 0 = agent lives in-the-moment :)
+const network_size = num_inputs*temporal_window + num_actions*temporal_window + num_inputs;
+const AUTO_PAINT_CYCLES = 10;
+
+var justPaintCycles = AUTO_PAINT_CYCLES;
 
 // the value function network computes a value of taking any of the possible actions
 // given an input state. Here we specify one explicitly the hard way
@@ -32,10 +35,10 @@ var tdtrainer_options = {learning_rate:0.001, momentum:0.0, batch_size:64, l2_de
 var opt = {};
 opt.temporal_window = temporal_window;
 opt.experience_size = 30000;
-opt.start_learn_threshold = 1000;
+opt.start_learn_threshold = 10;
 opt.gamma = 0.7;
 opt.learning_steps_total = 200000;
-opt.learning_steps_burnin = 3000;
+opt.learning_steps_burnin = 30;
 opt.epsilon_min = 0.05;
 opt.epsilon_test_time = 0.05;
 opt.layer_defs = layer_defs;
@@ -44,8 +47,8 @@ opt.tdtrainer_options = tdtrainer_options;
 var brain = new deepqlearn.Brain(num_inputs, num_actions, opt); // woohoo
 
 function generateUniforms () {
-  var limit = 10;
-  var _uniforms = [];
+  let limit = 10;
+  let _uniforms = [];
   while ( limit-- ) {
     _uniforms.push( { name: 'learning'+limit, index: limit, val: Math.random() } );
   }
@@ -54,30 +57,30 @@ function generateUniforms () {
 }
 
 function getActions () {
-  return window.learningUniforms.reduce(function (result, current, index) {
+  return window.learningUniforms.reduce(function (result, currentUniform, index) {
     result.push( (function () {
       //Decrement a little
       this.val -= 0.001;
       return this;
-    }).bind(current) );
+    }).bind(currentUniform) );
 
     result.push( (function () {
       //Increment a little
       this.val += 0.001;
       return this;
-    }).bind(current) );
+    }).bind(currentUniform) );
 
     result.push( (function () {
       //Decrement a lot
       this.val -= 0.1;
       return this;
-    }).bind(current) );
+    }).bind(currentUniform) );
 
     result.push( (function () {
       //Increment a lot
       this.val += 0.1;
       return this;
-    }).bind(current) );
+    }).bind(currentUniform) );
 
     return result;
   }, [function () {
@@ -108,7 +111,7 @@ function checkStatus(response) {
   if (response.status >= 200 && response.status < 300) {
     return response
   } else {
-    var error = new Error(response.statusText)
+    let error = new Error(response.statusText)
     error.response = response
     throw error
   }
@@ -118,23 +121,48 @@ function parseJSON(response) {
   return response.json()
 }
 
-var justPaintCycles = 100;
-function justPaint () {
+function justPaint() {
   if ( !(--justPaintCycles) ) return;
-  requestAnimationFrame(justPaint);
   var action = brain.forward(window.learningUniforms.map(function (uni) {
     return uni.val;
   }));
   getActions()[action]();
-}
-justPaint();
 
-var learnLock = false;
-function learnToPaint () {
-  if (learnLock) {
-    return;
+  if ( validateResult() < 30 ) {
+    //Bad artist!
+    window.rewards.merit = -1;
+    learnToPaint();
+  } else {
+    requestAnimationFrame(justPaint);
   }
-  learnLock = true;
+}
+
+function getKeys(obj) {
+  let keys = [];
+  for (let key in obj) {
+    keys.push(key);
+  }
+  return keys;
+}
+
+function validateResult() {
+  var gl = window.gl;
+  if (!gl) return;
+  var pixels = new Uint8Array(gl.drawingBufferWidth * gl.drawingBufferHeight * 4);
+  gl.readPixels(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+  var _limit = pixels.reduce(function (result, current, index, arr) {
+    if ( index && index % 4 === 0 ) {
+      let track = {name:'',}
+      let name = 'r'+ '' +arr[index-1]+ 'g' +arr[index-2]+ 'b' +arr[index-3];
+      if ( !result[name] ) result[name] = 0;
+      result[name]++;
+    }
+    return result;
+  }, {});
+  return getKeys(_limit).length;
+}
+
+function learnToPaint () {
   var action = brain.forward(window.learningUniforms.map(function (uni) {
     return uni.val;
   }));
@@ -156,13 +184,13 @@ function learnToPaint () {
     .then(parseJSON)
     .then(loadBrainFromJSON)
     .then(function () {
-      learnLock = false;
-      justPaintCycles = 100;
+      justPaintCycles = AUTO_PAINT_CYCLES;
       justPaint();
     });
 
   console.log(window.rewards.merit);
 }
-//learnToPaint();
+
+justPaint();
 
 })(window, document);
