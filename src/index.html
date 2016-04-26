@@ -18,7 +18,7 @@
         bottom: 0;
         left: 0;
         width: 100%;
-        background-color: rgba(0,0,0,0.3);
+        background-color: rgba(0,0,0,0.7);
         padding: 20px;
         box-sizing: border-box;
       }
@@ -26,15 +26,23 @@
         font-size: 20px;
         color: white;
         display: block;
+        font-weight: 100;
+      }
+      .messages h2 strong {
+        text-transform: uppercase;
+        font-weight: 900;
+      }
+      #glcanvas {
+        min-height: 100vh;
       }
     </style>
   </head>
   <body>
     <canvas id="glcanvas"></canvas>
     <section class="messages">
-      <h2 id="intro">Hi! I'm a Neural Network that is learing how to paint. Tap your up arrow key to tell me if you like what I drew. Tap the down key if you don&rsquo;t. PS. I don't place nice with Retina Screens.</h2>
+      <h2 id="intro">Hi! I'm a Neural Network that is learing how to paint. Tap your <strong>up</strong> arrow key to tell me if you like what I drew. Tap the <strong>down</strong> key if you don&rsquo;t. PS. I don't place nice with Retina Screens.</h2>
       <h2 id="wait">One second &ndash; I need to think about this.</h2>
-      <h2 id="again">How about this? Tap the up arrow key if you like it, and the down if you don&rsquo;t.</h2>
+      <h2 id="again">How about this? Tap the <strong>up</strong> arrow key if you like it, and the <strong>down</strong> if you don&rsquo;t.</h2>
     </section>
   </body>
 </html>

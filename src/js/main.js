@@ -29,6 +29,8 @@
 
   const glUtils = require('./glUtils');
   const artist = require('./artist');
+  let utils = require('utils');
+
 
   init();
 
@@ -44,7 +46,7 @@
     mouse.x = window.innerWidth/2;
     mouse.y = window.innerHeight/2;
 
-    gl = glUtils.setupWebGL(canvas, {preserveDrawingBuffer: true});
+    gl = glUtils.setupWebGL(canvas, {preserveDrawingBuffer: !(utils.getUrlVars('learningmodeoff')) });
     window.gl = gl;
 
     // THINK ABOUT A LARGER VERTEX BUFFER
@@ -73,12 +75,18 @@
         increaseMerit('merit')();
       } else if (event.keyCode === 40) {
         resetMerit('merit')();
+      } else if (event.keyCode === 80) {
+        resetMerit('merit')();
+        panicButton();
       }
     });
   }
+  function panicButton () {
+    window.dispatchEvent(new Event('panic'));
+  }
   function increaseMerit (key) {
     return function () {
-      rewards[key]+=5;
+      rewards[key]+=10;
       window.dispatchEvent(new Event('learn'));
     }
   }
