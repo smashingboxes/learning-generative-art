@@ -30,6 +30,7 @@
     "convnetjs": "^0.3.0",
     "es6-promise": "^3.1.2",
     "express": "^4.13.4",
+    "gsap": "^1.18.3",
     "redis": "^2.6.0-1",
     "script-loader": "^0.6.1",
     "sylvester": "0.0.21",

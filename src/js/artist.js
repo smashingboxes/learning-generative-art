@@ -1,4 +1,4 @@
-(function (window, document) {
+;(function (window, document) {
 
 const fetch = window.fetch || require('whatwg-fetch');
 const Promise = Promise || require('es6-promise');
@@ -8,15 +8,20 @@ const ROOT = location.origin.replace('8080','3210');
 console.log(fetch, Promise);
 
 window.learningUniforms = generateUniforms();
-var deepqlearn = require("deepqlearn");
+let deepqlearn = require('deepqlearn');
+let utils = require('utils');
+let TweenMax = require('gsap');
 
-const num_inputs = 1; // 9 eyes, each sees 3 numbers (wall, green, red thing proximity)
+const num_inputs = window.learningUniforms.length; // 9 eyes, each sees 3 numbers (wall, green, red thing proximity)
 const num_actions = getActions().length; // 5 possible angles agent can turn
 const temporal_window = 1; // amount of temporal memory. 0 = agent lives in-the-moment :)
 const network_size = num_inputs*temporal_window + num_actions*temporal_window + num_inputs;
-const AUTO_PAINT_CYCLES = 10;
+const AUTO_PAINT_CYCLES = 4;
 
-var justPaintCycles = AUTO_PAINT_CYCLES;
+let learnToPaintCycles = AUTO_PAINT_CYCLES;
+
+const PAINT_TIME = 500;
+
 
 // the value function network computes a value of taking any of the possible actions
 // given an input state. Here we specify one explicitly the hard way
@@ -46,6 +51,7 @@ opt.tdtrainer_options = tdtrainer_options;
 
 var brain = new deepqlearn.Brain(num_inputs, num_actions, opt); // woohoo
 
+
 function generateUniforms () {
   let limit = 10;
   let _uniforms = [];
@@ -56,32 +62,23 @@ function generateUniforms () {
   return _uniforms;
 }
 
+function actionFactory (degree) {
+  return function () {
+    if ( utils.getUrlVars('learningmodeoff') ) {
+      TweenMax.to(this, PAINT_TIME/1000, {val: this.val + degree});
+    } else {
+      this.val += degree;
+    }
+    return this;
+  }
+}
+
 function getActions () {
   return window.learningUniforms.reduce(function (result, currentUniform, index) {
-    result.push( (function () {
-      //Decrement a little
-      this.val -= 0.001;
-      return this;
-    }).bind(currentUniform) );
-
-    result.push( (function () {
-      //Increment a little
-      this.val += 0.001;
-      return this;
-    }).bind(currentUniform) );
-
-    result.push( (function () {
-      //Decrement a lot
-      this.val -= 0.1;
-      return this;
-    }).bind(currentUniform) );
-
-    result.push( (function () {
-      //Increment a lot
-      this.val += 0.1;
-      return this;
-    }).bind(currentUniform) );
-
+    result.push( (actionFactory(-0.0001)).bind(currentUniform) );
+    result.push( (actionFactory(0.0001)).bind(currentUniform) );
+    result.push( (actionFactory(-0.1)).bind(currentUniform) );
+    result.push( (actionFactory(0.1)).bind(currentUniform) );
     return result;
   }, [function () {
     //no action
@@ -94,13 +91,11 @@ window.addEventListener('learn', function () {
   learnToPaint();
 }, false);
 
-fetch(ROOT+'/brain/brain.json')
-  .then(checkStatus)
-  .then(parseJSON)
-  .then(loadBrainFromJSON)
-  .catch(function (err) {
-    console.log(err);
-  });
+window.addEventListener('panic', function () {
+  console.log('panic!');
+  window.learningUniforms = generateUniforms();
+}, false);
+
 
 function loadBrainFromJSON (data) {
   console.log(data);
@@ -122,19 +117,13 @@ function parseJSON(response) {
 }
 
 function justPaint() {
-  if ( !(--justPaintCycles) ) return;
   var action = brain.forward(window.learningUniforms.map(function (uni) {
     return uni.val;
   }));
   getActions()[action]();
-
-  if ( validateResult() < 30 ) {
-    //Bad artist!
-    window.rewards.merit = -1;
-    learnToPaint();
-  } else {
-    requestAnimationFrame(justPaint);
-  }
+  setTimeout(function () {
+    justPaint();
+  }, PAINT_TIME/4);
 }
 
 function getKeys(obj) {
@@ -149,6 +138,8 @@ function validateResult() {
   var gl = window.gl;
   if (!gl) return;
   var pixels = new Uint8Array(gl.drawingBufferWidth * gl.drawingBufferHeight * 4);
+  var fullLength = pixels.length/4;
+  var largestPool = 0;
   gl.readPixels(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
   var _limit = pixels.reduce(function (result, current, index, arr) {
     if ( index && index % 4 === 0 ) {
@@ -156,19 +147,49 @@ function validateResult() {
       let name = 'r'+ '' +arr[index-1]+ 'g' +arr[index-2]+ 'b' +arr[index-3];
       if ( !result[name] ) result[name] = 0;
       result[name]++;
+      if (largestPool < result[name] ) {
+        largestPool = result[name];
+      }
     }
     return result;
   }, {});
-  return getKeys(_limit).length;
+  return largestPool/fullLength;
 }
 
+function learnToPaintLoop () {
+  var resultValidity = validateResult();
+  if ( resultValidity > 0.6 ) {
+    //Bad artist!
+    if (window.rewards.merit > 0) {
+      window.rewards.merit = 0;
+    } else {
+      window.rewards.merit -= 1;
+    }
+    console.log('Bad Painting!', resultValidity, window.rewards.merit);
+  } else if ( resultValidity < 0.12 ) {
+    if (window.rewards.merit <= 0) {
+      window.rewards.merit = 1;
+    }
+    console.log('Good Painting!', resultValidity, window.rewards.merit);
+  }
+  requestAnimationFrame(learnToPaint);
+}
 function learnToPaint () {
+  if ( utils.getUrlVars('learningmodeoff') ) {
+    return;
+  }
+  if ( !(--learnToPaintCycles) ) {
+    requestAnimationFrame(justPaint);
+    return;
+  };
+
   var action = brain.forward(window.learningUniforms.map(function (uni) {
     return uni.val;
   }));
 
   // action is a number in [0, num_actions) telling index of the action the agent chooses
   getActions()[action]();
+
   // here, apply the action on environment and observe some reward. Finally, communicate it:
   var r = brain.backward( window.rewards.merit ); // <-- learning magic happens here
 
@@ -184,13 +205,26 @@ function learnToPaint () {
     .then(parseJSON)
     .then(loadBrainFromJSON)
     .then(function () {
-      justPaintCycles = AUTO_PAINT_CYCLES;
-      justPaint();
+      learnToPaintCycles = AUTO_PAINT_CYCLES;
+      learnToPaintLoop();
     });
-
-  console.log(window.rewards.merit);
 }
 
-justPaint();
+
+fetch(ROOT+'/brain/brain.json')
+  .then(checkStatus)
+  .then(parseJSON)
+  .then(loadBrainFromJSON)
+  .then(function () {
+    if ( utils.getUrlVars('learningmodeoff') ) {
+      justPaint();
+    } else {
+      learnToPaint();
+    }
+  })
+  .catch(function (err) {
+    console.log(err);
+  });
+
 
 })(window, document);
