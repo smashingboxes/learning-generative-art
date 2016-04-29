@@ -23,7 +23,7 @@ const AUTO_PAINT_CYCLES = 4;
 
 let learnToPaintCycles = AUTO_PAINT_CYCLES;
 
-const PAINT_TIME = 800;
+const PAINT_TIME = 400;
 
 
 // the value function network computes a value of taking any of the possible actions
@@ -67,21 +67,26 @@ function generateUniforms () {
 
 function actionFactory (degree) {
   return function () {
-    TweenMax.to(this, PAINT_TIME/1000, {val: this.val + degree});
-    return this;
+    var r;
+    var p = new Promise(function (resolve) {
+      r = resolve;
+    });
+    TweenMax.to(this, PAINT_TIME/1000, {val: this.val + degree, onComplete: r});
+    return p;
   }
 }
 
 function getActions () {
   return window.learningUniforms.reduce(function (result, currentUniform, index) {
-    result.push( (actionFactory(-0.0001)).bind(currentUniform) );
-    result.push( (actionFactory(0.0001)).bind(currentUniform) );
+    result.push( (actionFactory(-0.001)).bind(currentUniform) );
+    result.push( (actionFactory(0.001)).bind(currentUniform) );
     result.push( (actionFactory(-0.1)).bind(currentUniform) );
     result.push( (actionFactory(0.1)).bind(currentUniform) );
     return result;
   }, [function () {
     //no action
     //noop
+    return Promise.resolve();
   }, panicFunction]);
 }
 
@@ -91,7 +96,14 @@ function panicFunction () {
     (function (degree) {
       TweenMax.to(this, PAINT_TIME/500, {val: degree});
     }).bind(currentUniform)(Math.random());
-    console.log('Crazy Reset!');
+  });
+
+  console.log('Crazy Reset!');
+
+  return new Promise(function (resolve, reject) {
+    setTimeout(function () {
+      resolve();
+    }, PAINT_TIME*2.1);
   });
 }
 
@@ -107,7 +119,7 @@ window.addEventListener('panic', function () {
 
 
 function loadBrainFromJSON (data) {
-  console.log('Brain Loaded');
+  //console.log('Brain Loaded');
   brain.value_net.fromJSON( data ) //LOAD BRAIN;
 }
 
@@ -163,7 +175,7 @@ function validateResult() {
 function learnToPaintLoop () {
   validateResult()
     .then(function (resultValidity) {
-      if ( resultValidity > 0.85 ) {
+      if ( resultValidity > 0.92 ) {
         //Bad artist!
         if (window.rewards.merit > 0) {
           window.rewards.merit = 0;
@@ -179,11 +191,11 @@ function learnToPaintLoop () {
           window.rewards.merit = 0;
         }
         console.log('Doing Better...', resultValidity, window.rewards.merit);
-      } else if ( resultValidity < 0.12 ) {
+      } else if ( resultValidity < 0.19 ) {
         if (window.rewards.merit <= 0) {
           window.rewards.merit = 1;
         } else {
-          window.rewards.merit += 10;
+          window.rewards.merit += 3;
         }
         console.log('Good Painting!', resultValidity, window.rewards.merit);
       }
@@ -203,31 +215,36 @@ function learnToPaint () {
   }));
 
   // action is a number in [0, num_actions) telling index of the action the agent chooses
-  getActions()[action]();
+  getActions()[action]().then(function () {
 
-  // here, apply the action on environment and observe some reward. Finally, communicate it:
-  var r = brain.backward( window.rewards.merit ); // <-- learning magic happens here
+    // here, apply the action on environment and observe some reward. Finally, communicate it:
+    var r = brain.backward( window.rewards.merit ); // <-- learning magic happens here
 
-  fetch(ROOT+'/memory', {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(brain.value_net.toJSON())
-    })
-    .then(checkStatus)
-    .then(parseJSON)
-    .then(loadBrainFromJSON)
-    .then(function () {
-      requestAnimationFrame(learnToPaintLoop);
-      requestAnimationFrame(artistLearnedFlash);
-    });
+    console.log('Action index: ', action);
+
+    fetch(ROOT+'/memory', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(brain.value_net.toJSON())
+      })
+      .then(checkStatus)
+      .then(parseJSON)
+      .then(loadBrainFromJSON)
+      .then(function () {
+        requestAnimationFrame(learnToPaintLoop);
+        requestAnimationFrame(artistLearnedFlash);
+      });
+
+  });
+
 }
 
 function artistLearnedFlash () {
   TweenMax.to('#learned', 0.3, {scale: '1'});
-  TweenMax.to('#learned', 0.7, {scale: '0.0001', delay: 0.2});
+  TweenMax.to('#learned', 0.7, {scale: '0.01', delay: 0.2});
 }
 
 fetch(ROOT+'/brain/brain.json')
