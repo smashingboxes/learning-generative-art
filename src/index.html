@@ -46,21 +46,22 @@
       }
       #learned {
         font-size: 12;
-        color: white;
-        background-color: rgba(0,0,0,1);
+        background-color: white;
+        bottom: 10px;
+        right: 10px;
+        width: 40px;
+        height: 40px;
+        border-radius: 100px;
         position: absolute;
-        top: 0;
-        left: 0;
-        opacity: 0;
-        padding: 1em;
+        transform: scale(0.0001);
       }
     </style>
   </head>
   <body>
     <canvas id="glcanvas"></canvas>
     <div id="scoreWrap">Artist Reward: <span id="score">0</span></div>
-    <div id="learned">I learned something!</div>
     <section id="messages" class="messages">
+      <div id="learned"></div>
       <h2 id="intro">Hi! I'm a Deep "Q" Learning Neural Network that is learing how to paint. </h2>
       <p>Tap your <strong>up</strong> Arrow Key to give me a reward me if you like what I drew. Tap the <strong>down</strong> Key to let me know if you don&rsquo;t (I need positive and negative feedback to learn). Tap the "<strong>P</strong>" Key if you want to see something totally different. Click to close this message.</p>
       <p><small>PS. I don't place nice with Retina Screens.</small></p>

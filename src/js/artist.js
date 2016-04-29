@@ -23,7 +23,7 @@ const AUTO_PAINT_CYCLES = 4;
 
 let learnToPaintCycles = AUTO_PAINT_CYCLES;
 
-const PAINT_TIME = 500;
+const PAINT_TIME = 800;
 
 
 // the value function network computes a value of taking any of the possible actions
@@ -82,7 +82,17 @@ function getActions () {
   }, [function () {
     //no action
     //noop
-  }]);
+  }, panicFunction]);
+}
+
+function panicFunction () {
+  //crazy reset
+  window.learningUniforms.forEach(function (currentUniform, index) {
+    (function (degree) {
+      TweenMax.to(this, PAINT_TIME/500, {val: degree});
+    }).bind(currentUniform)(Math.random());
+    console.log('Crazy Reset!');
+  });
 }
 
 window.addEventListener('learn', function () {
@@ -92,12 +102,12 @@ window.addEventListener('learn', function () {
 
 window.addEventListener('panic', function () {
   console.log('panic!');
-  window.learningUniforms = generateUniforms();
+  panicFunction();
 }, false);
 
 
 function loadBrainFromJSON (data) {
-  console.log(data);
+  console.log('Brain Loaded');
   brain.value_net.fromJSON( data ) //LOAD BRAIN;
 }
 
@@ -153,12 +163,15 @@ function validateResult() {
 function learnToPaintLoop () {
   validateResult()
     .then(function (resultValidity) {
-      if ( resultValidity > 0.8 ) {
+      if ( resultValidity > 0.85 ) {
         //Bad artist!
         if (window.rewards.merit > 0) {
           window.rewards.merit = 0;
         } else {
           window.rewards.merit -= 2;
+        }
+        if (resultValidity > 0.98) {
+          window.rewards.merit -= 10;
         }
         console.log('Bad Painting!', resultValidity, window.rewards.merit);
       } else if ( resultValidity < 0.8 ) {
@@ -208,15 +221,14 @@ function learnToPaint () {
     .then(loadBrainFromJSON)
     .then(function () {
       requestAnimationFrame(learnToPaintLoop);
-      //requestAnimationFrame(artistLearnedFlash);
+      requestAnimationFrame(artistLearnedFlash);
     });
 }
 
 function artistLearnedFlash () {
-  TweenMax.to('#learned', 0.1, {opacity: '1'});
-  TweenMax.to('#learned', 0.1, {opacity: '0', delay: 1.0});
+  TweenMax.to('#learned', 0.3, {scale: '1'});
+  TweenMax.to('#learned', 0.7, {scale: '0.0001', delay: 0.2});
 }
-
 
 fetch(ROOT+'/brain/brain.json')
   .then(checkStatus)
@@ -233,5 +245,6 @@ fetch(ROOT+'/brain/brain.json')
     console.log(err);
   });
 
+//learnToPaint();
 
 })(window, document);
