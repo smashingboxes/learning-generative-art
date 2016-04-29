@@ -1,7 +1,10 @@
 ;(function (window, document) {
 
-const fetch = window.fetch || require('whatwg-fetch');
-const Promise = Promise || require('es6-promise');
+const fetch = window.fetch || require('whatwg-fetch').fetch;
+//const Promise = Promise || require('es6-promise');
+
+var ValidationWorker = require("worker!./validation-worker");
+var validationWorker = new ValidationWorker();
 
 const ROOT = location.origin.replace('8080','3210');
 
@@ -64,11 +67,7 @@ function generateUniforms () {
 
 function actionFactory (degree) {
   return function () {
-    if ( utils.getUrlVars('learningmodeoff') ) {
-      TweenMax.to(this, PAINT_TIME/1000, {val: this.val + degree});
-    } else {
-      this.val += degree;
-    }
+    TweenMax.to(this, PAINT_TIME/1000, {val: this.val + degree});
     return this;
   }
 }
@@ -135,44 +134,44 @@ function getKeys(obj) {
 }
 
 function validateResult() {
-  var gl = window.gl;
+  let gl = window.gl;
   if (!gl) return;
-  var pixels = new Uint8Array(gl.drawingBufferWidth * gl.drawingBufferHeight * 4);
-  var fullLength = pixels.length/4;
-  var largestPool = 0;
-  gl.readPixels(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
-  var _limit = pixels.reduce(function (result, current, index, arr) {
-    if ( index && index % 4 === 0 ) {
-      let track = {name:'',}
-      let name = 'r'+ '' +arr[index-1]+ 'g' +arr[index-2]+ 'b' +arr[index-3];
-      if ( !result[name] ) result[name] = 0;
-      result[name]++;
-      if (largestPool < result[name] ) {
-        largestPool = result[name];
-      }
-    }
-    return result;
-  }, {});
-  return largestPool/fullLength;
+
+  return new Promise(function (resolve, reject) {
+
+    validationWorker.onmessage = function(event) {
+      //console.log(event);
+      resolve(event.data[0]);
+    };
+
+    let pixels = new Uint8Array(gl.drawingBufferWidth * gl.drawingBufferHeight * 4);
+    gl.readPixels(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+    validationWorker.postMessage([pixels]);
+  });
 }
 
 function learnToPaintLoop () {
-  var resultValidity = validateResult();
-  if ( resultValidity > 0.6 ) {
-    //Bad artist!
-    if (window.rewards.merit > 0) {
-      window.rewards.merit = 0;
-    } else {
-      window.rewards.merit -= 1;
-    }
-    console.log('Bad Painting!', resultValidity, window.rewards.merit);
-  } else if ( resultValidity < 0.12 ) {
-    if (window.rewards.merit <= 0) {
-      window.rewards.merit = 1;
-    }
-    console.log('Good Painting!', resultValidity, window.rewards.merit);
-  }
-  requestAnimationFrame(learnToPaint);
+  validateResult()
+    .then(function (resultValidity) {
+      if ( resultValidity > 0.6 ) {
+        //Bad artist!
+        if (window.rewards.merit > 0) {
+          window.rewards.merit = 0;
+        } else {
+          window.rewards.merit -= 1;
+        }
+        console.log('Bad Painting!', resultValidity, window.rewards.merit);
+      } else if ( resultValidity < 0.12 ) {
+        if (window.rewards.merit <= 0) {
+          window.rewards.merit = 1;
+        }
+        console.log('Good Painting!', resultValidity, window.rewards.merit);
+      }
+      requestAnimationFrame(learnToPaint);
+    })
+    .catch((e) => {
+      console.log(e);
+    });
 }
 function learnToPaint () {
   if ( utils.getUrlVars('learningmodeoff') ) {
