@@ -21,28 +21,49 @@
         background-color: rgba(0,0,0,0.7);
         padding: 20px;
         box-sizing: border-box;
+        color: white;
       }
       .messages h2 {
         font-size: 20px;
-        color: white;
         display: block;
         font-weight: 100;
       }
-      .messages h2 strong {
+      .messages strong {
         text-transform: uppercase;
         font-weight: 900;
       }
       #glcanvas {
         min-height: 100vh;
       }
+      #scoreWrap {
+        font-size: 20px;
+        color: white;
+        background-color: rgba(0,0,0,0.7);
+        position: absolute;
+        top: 0;
+        right: 0;
+        padding: 20px;
+      }
+      #learned {
+        font-size: 12;
+        color: white;
+        background-color: rgba(0,0,0,1);
+        position: absolute;
+        top: 0;
+        left: 0;
+        opacity: 0;
+        padding: 1em;
+      }
     </style>
   </head>
   <body>
     <canvas id="glcanvas"></canvas>
-    <section class="messages">
-      <h2 id="intro">Hi! I'm a Neural Network that is learing how to paint. Tap your <strong>up</strong> arrow key to tell me if you like what I drew. Tap the <strong>down</strong> key if you don&rsquo;t. PS. I don't place nice with Retina Screens.</h2>
-      <h2 id="wait">One second &ndash; I need to think about this.</h2>
-      <h2 id="again">How about this? Tap the <strong>up</strong> arrow key if you like it, and the <strong>down</strong> if you don&rsquo;t.</h2>
+    <div id="scoreWrap">Artist Reward: <span id="score">0</span></div>
+    <div id="learned">I learned something!</div>
+    <section id="messages" class="messages">
+      <h2 id="intro">Hi! I'm a Deep "Q" Learning Neural Network that is learing how to paint. </h2>
+      <p>Tap your <strong>up</strong> Arrow Key to give me a reward me if you like what I drew. Tap the <strong>down</strong> Key to let me know if you don&rsquo;t (I need positive and negative feedback to learn). Tap the "<strong>P</strong>" Key if you want to see something totally different. Click to close this message.</p>
+      <p><small>PS. I don't place nice with Retina Screens.</small></p>
     </section>
   </body>
 </html>

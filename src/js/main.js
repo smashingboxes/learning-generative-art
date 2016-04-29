@@ -30,6 +30,7 @@
   const glUtils = require('./glUtils');
   const artist = require('./artist');
   let utils = require('utils');
+  let TweenMax = require('gsap');
 
 
   init();
@@ -74,11 +75,15 @@
       if (event.keyCode === 38) {
         increaseMerit('merit')();
       } else if (event.keyCode === 40) {
-        resetMerit('merit')();
+        decreaseMerit('merit')();
       } else if (event.keyCode === 80) {
-        resetMerit('merit')();
+        window.rewards.merit = 0;
         panicButton();
       }
+    });
+
+    $('#messages').addEventListener('click', function () {
+      TweenMax.to('#messages', 0.5, {bottom: '-600px'})
     });
   }
   function panicButton () {
@@ -86,19 +91,18 @@
   }
   function increaseMerit (key) {
     return function () {
+      if (rewards[key] < 0) rewards[key] = 0;
       rewards[key]+=10;
       window.dispatchEvent(new Event('learn'));
     }
   }
   function decreaseMerit (key) {
     return function () {
-      rewards[key]-=1;
-      window.dispatchEvent(new Event('learn'));
-    }
-  }
-  function resetMerit (key) {
-    return function () {
-      rewards[key]=0;
+      if ( rewards[key] > 0 ) {
+        rewards[key]=0;
+      } else {
+        rewards[key]-=5;
+      }
       window.dispatchEvent(new Event('learn'));
     }
   }
@@ -243,6 +247,12 @@
     gl.enableVertexAttribArray( vertex_position );
     gl.drawArrays( gl.TRIANGLES, 0, 6 );
     gl.disableVertexAttribArray( vertex_position );
+
+    updateScore();
+  }
+
+  function updateScore () {
+    $('#score').innerHTML = window.rewards.merit;
   }
 
 

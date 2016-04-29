@@ -153,17 +153,24 @@ function validateResult() {
 function learnToPaintLoop () {
   validateResult()
     .then(function (resultValidity) {
-      if ( resultValidity > 0.6 ) {
+      if ( resultValidity > 0.8 ) {
         //Bad artist!
         if (window.rewards.merit > 0) {
           window.rewards.merit = 0;
         } else {
-          window.rewards.merit -= 1;
+          window.rewards.merit -= 2;
         }
         console.log('Bad Painting!', resultValidity, window.rewards.merit);
+      } else if ( resultValidity < 0.8 ) {
+        if (window.rewards.merit < 0) {
+          window.rewards.merit = 0;
+        }
+        console.log('Doing Better...', resultValidity, window.rewards.merit);
       } else if ( resultValidity < 0.12 ) {
         if (window.rewards.merit <= 0) {
           window.rewards.merit = 1;
+        } else {
+          window.rewards.merit += 10;
         }
         console.log('Good Painting!', resultValidity, window.rewards.merit);
       }
@@ -177,10 +184,6 @@ function learnToPaint () {
   if ( utils.getUrlVars('learningmodeoff') ) {
     return;
   }
-  if ( !(--learnToPaintCycles) ) {
-    requestAnimationFrame(justPaint);
-    return;
-  };
 
   var action = brain.forward(window.learningUniforms.map(function (uni) {
     return uni.val;
@@ -204,9 +207,14 @@ function learnToPaint () {
     .then(parseJSON)
     .then(loadBrainFromJSON)
     .then(function () {
-      learnToPaintCycles = AUTO_PAINT_CYCLES;
-      learnToPaintLoop();
+      requestAnimationFrame(learnToPaintLoop);
+      //requestAnimationFrame(artistLearnedFlash);
     });
+}
+
+function artistLearnedFlash () {
+  TweenMax.to('#learned', 0.1, {opacity: '1'});
+  TweenMax.to('#learned', 0.1, {opacity: '0', delay: 1.0});
 }
 
 

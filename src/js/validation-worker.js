@@ -1,5 +1,5 @@
 onmessage = function(e) {
-  console.log('Message received from main script');
+  //console.log('Message received from main script');
 
   let pixels = e.data[0];
   let result = {};
@@ -21,6 +21,6 @@ onmessage = function(e) {
     return result;
   }, {});
 
-  console.log('Posting message back to main script', pixels.length, largestPool/fullLength);
+  //console.log('Posting message back to main script', pixels.length, largestPool/fullLength);
   postMessage([largestPool/fullLength]);
 }
