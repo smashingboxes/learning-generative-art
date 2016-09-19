@@ -5,9 +5,20 @@ precision mediump float;
 //#extension GL_OES_standard_derivatives : enable
 
 uniform float time;
-uniform vec2 mouse;
+uniform float scrolly;
+uniform vec2 ctaDistance;
 uniform vec2 delayMouse;
 uniform vec2 resolution;
+
+const float timeMult = 1.5;
+const float radius = 4.;
+const int sections = 36;
+const float travelDist = 650.;
+const float hPI = 3.141592653589793 / 2.;
+const float timeEffectDampening = 100.;
+
+uniform float rawseed;
+
 uniform float learning0;
 uniform float learning1;
 uniform float learning2;
@@ -19,64 +30,148 @@ uniform float learning7;
 uniform float learning8;
 uniform float learning9;
 
-vec3 roty(vec3 p,float a) {
-  return mat3(cos(a),0,-sin(a), 0,1,0, sin(a),0,cos(a)) * p * (learning2 + learning3);
+const vec4 color1 = vec4( 235./255., 23./255., 103./255., 1. );
+const vec4 color2 = vec4( 182./255., 62./255., 134./255., 1. );
+const vec4 white = vec4( 1., 1., 1., 1. );
+vec4 colorRand = color2;
+
+
+float snoise(vec2 co){
+    return (fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453))*0.00000001;
 }
 
-float map(in vec3 p)
-{
-  float muscle0 = -(32. * learning9);
-  float muscle1 = -(3. * learning8);
-  vec3 c=p; float res=0.;
-  for (int i=0; i < 7; i++)
-  {
-    p= abs(p)/dot(p,p) -learning8;
-    p.yz= vec2(p.y*p.y-p.z*p.z,muscle1*p.y*p.z);
-    res += exp(muscle0 / learning8 * abs(dot(p,c)));
-  }
-  return res * ((sin(1.)+1.)/(muscle1*learning7))*(learning3+1.)*(learning2+1.);
+float flatten (vec4 outcolor) {
+    return (outcolor.r + outcolor.g + outcolor.b)/4.;
 }
 
-vec3 raymarch(vec3 ro, vec3 rd)
+float safeSin(float num) {
+    return 0.5+(sin(num)/2.);
+}
+
+vec4 stripes(vec2 _uv, float modifyXColor, float modifyYColor)
 {
-  float t=4.0;
-  vec3 col=vec3(0);
-  float c=0.;
-  float timeclamp = clamp( (learning8-0.5), 0., 1.);
-  float muscle0 = 2.2 * learning0 * 2.;
-  float muscle1 = 1.9 * learning1 * 2.;
-  float muscle2 = 1.0 * learning2 * 2.;
-  float muscle3 = 8.0 * learning3 * 2.;
-  float muscle4 = 5.5 * learning4 * 2.;
-  float muscle5 = 6.0 * learning5 * 2.;
-  float muscle6 = 2.0 * learning0 * 2.;
+    vec4 stripeout = white;
 
-  float baseline = 8.0 * learning4 * learning5 * 4.;
-
-  for( int i=0; i < 20; i++ )
-  {
-    if ( i < int(20.*learning0)+3 ) {
-      t+= exp(c*-(learning1*3.*learning2)) * 0.012;
-      c= map(t *rd +ro);
-      col= vec3(baseline*c*c, c, muscle5*c*c*c) *learning4 + col * ((sin(time*timeclamp*muscle0)+muscle4)/muscle3); //green
-      col= vec3(baseline*c*c*c, muscle6*c*c, c) *learning5 + col * ((cos(time*.1)+muscle1*learning7)/muscle6); //blue
-      col= vec3(baseline*c, c*c*c, c*c) *learning6 + col * ((sin(learning3*1.)+muscle2)+.1/learning5); //red
+    if (mod(_uv.x, 4.0) > safeSin(learning8) &&
+        mod(_uv.x, 4.0) < safeSin(learning8)+0.23) {
+        stripeout = stripeout+color2;
     }
-  }
-  return col;
+    if (mod(_uv.x, 2.3) > safeSin(learning9) &&
+        mod(_uv.x, 2.3) < safeSin(learning9)+0.11) {
+        stripeout = white+color1;
+    }
+    if (mod(_uv.x*rawseed, 3.1) > safeSin(learning7) &&
+        mod(_uv.x*rawseed, 3.1) < safeSin(learning7)+0.51) {
+        stripeout = stripeout+(color2+colorRand+(colorRand.rrgg*_uv.xxyx));
+    }
+
+    stripeout = normalize(stripeout+(vec4( safeSin(learning8)/4., safeSin(_uv.y)/4., safeSin(_uv.x)/4., 0.2 )));
+
+    stripeout = stripeout-(_uv.y * modifyYColor)/4.;
+    stripeout = stripeout+(_uv.x * modifyXColor)/5.;
+
+    stripeout = stripeout+((color2/4.)*_uv.y);
+
+    return normalize(stripeout);
+}
+float outClampFloat(float outVec, float mmax)
+{
+    return safeSin(outVec);
+}
+vec4 outClamp(vec4 outcolor)
+{
+    float mmax = max(max(max(outcolor.r, outcolor.b), outcolor.g), outcolor.a);
+    return outcolor / mmax;
 }
 
-vec4 getSpace() {
-  vec2 p= (gl_FragCoord.xy - resolution*0.5) / resolution.y;
-  vec3 ro= roty(vec3(3.), time*0.2 + learning2);
-  vec3 uu= normalize(cross(ro, vec3(1.0, .0, 0.0)));
-  vec3 vv= normalize(cross(uu, ro));
-  vec3 rd= normalize(p.x*uu + p.y*vv - ro*0.5 );
-  return vec4( log(raymarch(ro,rd) +1.0)*0.5, 1.0 );
+void main()
+{
+    colorRand = vec4( safeSin(learning6), 62./255., 134./255., 0.9 );
+
+    float modifyScroll = safeSin(learning0);
+    float modifyTimeEffect = sin(learning1)/2.;
+
+    float modifyMouse = safeSin(learning2)/2.;
+    float modifyCta = safeSin(learning3);
+
+    float modifyExtra = safeSin(learning4);
+
+    float modifyXColor = safeSin(learning5);
+    float modifyYColor = safeSin(learning6);
+
+    float m7 = safeSin(learning7);
+    float m8 = safeSin(learning8);
+    float m9 = safeSin(learning9);
+    float seed = rawseed*999999999.;
+    float seed2 = rawseed*hPI;
+
+    float scrollMod = (scrolly*modifyScroll);
+    float scrollModSin = safeSin(scrollMod+seed2);
+
+    vec2 ctaMod = ctaDistance*modifyMouse;
+
+    float delayMouseXMod = delayMouse.x*(modifyMouse);
+    float delayMouseYMod = delayMouse.y*(modifyMouse);
+    float mtime = safeSin((time+(seed))-(modifyTimeEffect*1.))+0.1;
+    float mxtime = safeSin((time*modifyTimeEffect)+seed);
+
+    float sAng = sin( (time/5.)/hPI );
+    float cAng = cos( (time/5.)/hPI );
+
+    mat3 rota = mat3(
+        cAng, -sAng, 0.,
+        sAng, cAng, 0.,
+        0., 0., 1.
+    );
+    mat3 trans = mat3(
+        1., 0., 0.,
+        0., 1., 0.,
+        delayMouseXMod, delayMouseYMod, 1.
+    );
+    mat3 trans2 = mat3(
+        1., 0., 0.,
+        0., 1., 0.,
+        rawseed, scrollModSin/2., 1.
+    );
+    float mmtime = safeSin(time)/10.;
+    mat3 scale = mat3(
+        1.+mmtime, 0., 0.,
+        0., 1.+mmtime, 0.,
+        0., 0., 1.
+    );
+
+    vec2 uv = (gl_FragCoord.xy / resolution.yy);
+    uv = (vec3(uv, 1.) * scale).xy;
+    uv = (vec3(uv, 1.) * trans2).xy;
+
+    uv.x = uv.x+ctaMod.x;
+    uv.y = uv.y+scrollMod+ctaMod.y;
+
+    uv = (vec3(uv, 1.) * scale).xy;
+
+    vec2 uvb = vec2( sin(uv.x-0.5+ctaMod.x), sin(uv.y-0.5+ctaMod.y) );
+
+    uv.x += (uvb.x * uvb.x * modifyExtra) * sin(seed2);
+    uv.y += (uvb.y * uvb.y * modifyExtra);
+
+    uv = (vec3(uv, 1.) * scale).xy;
+
+    uv.x += sin(uv.y*(ctaMod.x)) - m8;
+    uv.y += sin(uv.x*(ctaMod.y)) - m7;
+
+    uv.x *= sin(uvb.y + sin(m9) + cos(m8 * mtime));
+    uv.x += sin(uvb.x + sin(m8) + cos(m7 * mxtime));
+    //uv.y += sin(uvb.x + m8);
+
+    uv = (vec3(uv, 1.) * trans).xy;
+    uv = (vec3(uv, 1.) * rota).xy;
+
+    modifyXColor = modifyXColor * 3.;
+    modifyYColor = modifyYColor * 4.;
+
+
+    vec4 outcolor = stripes(uv, modifyXColor, modifyYColor);
+
+    outcolor = outcolor + (white);
+    gl_FragColor = outClamp(outcolor);
 }
-
-void main() {
-  gl_FragColor =  getSpace();
-}
-
-

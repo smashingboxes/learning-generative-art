@@ -4,67 +4,121 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><%= htmlWebpackPlugin.options.title %></title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/4.2.0/normalize.min.css">
     <style>
       body {
-        background-color: #000000;
+        background-color: #fff;
         margin: 0px;
-        overflow: hidden;
         position: relative;
         font-family: sans-serif;
         font-weight: 100;
       }
-      .messages {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        background-color: rgba(0,0,0,0.7);
-        padding: 20px;
+      .preamble {
+        position: relative;
+        width: 80%;
+        max-width: 1200px;
+        margin-left: auto;
+        margin-right: auto;
         box-sizing: border-box;
-        color: white;
+        color: #333;
+        z-index: 100;
+        margin-top: 20vh;
+        margin-bottom: 20vh;
+        padding: 2em;
+        display: none;
       }
-      .messages h2 {
-        font-size: 20px;
+      .messages {
+        position: relative;
+        margin-left: auto;
+        margin-right: auto;
+        box-sizing: border-box;
+        color: #333;
+        z-index: 100;
+        margin-top: 0;
+        margin-bottom: 0;
+        text-align: center;
+      }
+      .messages .owl-carousel {
         display: block;
-        font-weight: 100;
+        position: relative;
       }
-      .messages strong {
-        text-transform: uppercase;
-        font-weight: 900;
+      .messages .section--white,
+      .messages .section--pink,
+      .messages .section--grey {
+        padding: 0;
+      }
+      .messages > section,
+      .messages > section > div,
+      .messages .item,
+      .messages .slide {
+        margin-bottom: 10vh;
+      }
+      .messages .section--offices div {
+        margin-bottom: 0;
+      }
+      .messages .section--pink,
+      .messages .section--white,
+      .messages .section--grey,
+      .messages footer,
+      .messages .carousel {
+        background-color: transparent;
+      }
+      .messages img {
+        max-width: 100%;
+      }
+      .messages a#main-cta {
+        background-color: darkred;
+        color: white;
+        border-color: white;
+        font-size: 300%;
+        position: absolute;
+        top: 93%;
+        left: 50%;
+      }
+      .messages a#main-cta:hover {
+        background-color: #eb1767;
+
       }
       #glcanvas {
-        min-height: 100vh;
+        height: 100vh;
+        width: 100vw;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 1;
       }
       #scoreWrap {
         font-size: 20px;
         color: white;
         background-color: rgba(0,0,0,0.7);
-        position: absolute;
+        position: fixed;
         top: 0;
         right: 0;
         padding: 20px;
+        z-index: 200;
       }
       #learned {
         font-size: 12;
-        background-color: white;
+        background-color: rgba(0,0,0,0.7);
         bottom: 10px;
         right: 10px;
         width: 40px;
         height: 40px;
         border-radius: 100px;
-        position: absolute;
+        position: fixed;
+        z-index: 200;
         transform: scale(0.0001);
       }
     </style>
   </head>
   <body>
-    <canvas id="glcanvas"></canvas>
-    <div id="scoreWrap">Artist Reward: <span id="score">0</span></div>
+    <div class="preamble">
+      <h1>What the heck is this?!?</h1>
+      <p>Shhhh... it's a super secret project. You may notice that something that looks like the smashingboxes.com website is below. Why, you ask? For testing purposes, of course.</p>
+    </div>
     <section id="messages" class="messages">
-      <div id="learned"></div>
-      <h2 id="intro">Hi! I'm a Deep "Q" Learning Neural Network that is learing how to paint. </h2>
-      <p>Tap your <strong>up</strong> Arrow Key to give me a reward me if you like what I drew. Tap the <strong>down</strong> Key to let me know if you don&rsquo;t (I need positive and negative feedback to learn). Tap the "<strong>P</strong>" Key if you want to see something totally different. Click to close this message.</p>
-      <p><small>PS. I don't place nice with Retina Screens.</small></p>
+      <a class="button button-partner" id="main-cta" href="http://smashingboxes.com/contact">Work With Us</a>
+      <img src="<%= require('assets/page-mock.png') %>" alt="">
     </section>
   </body>
 </html>

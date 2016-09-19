@@ -20,7 +20,7 @@ module.exports = {
   },
   plugins: [
     new HtmlWebpackPlugin({
-      title: 'WebGL Project Boilerplate',
+      title: 'SB Generative Artist',
       template: TEMPLATE_PATH
     }),
     new webpack.DefinePlugin({
@@ -52,6 +52,10 @@ module.exports = {
         test: /\.glsl$/,
         include: SHADER_PATH,
         loader: 'webpack-glsl'
+      },
+      {
+        test: /\.jpe?g$|\.gif$|\.png$|\.svg$|\.woff$|\.ttf$|\.wav$|\.mp3$/,
+        loader: 'file'
       }
     ]
   },

@@ -2,6 +2,7 @@
 'use strict';
 const exec = require('child_process').exec;
 const commands = [
+  'rm ./brain/brain.json',
   'NODE_ENV=production webpack -p --progress --colors',
   'node ./server/server.js',
   'webpack-dev-server --content-base dist/ --colors --hot --inline'

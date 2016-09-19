@@ -1,133 +1,199 @@
-(function (window, document) {
-
-  var canvas, gl, buffer,
-      vertex_shader, fragment_shader,
-      currentProgram, vertex_position,
-
-      DEF_FRAG = 'shader.frag',
-      DEF_VERT = 'shader.vert',
-
-      delayMouse = {
-        x: 0,
-        y: 0
-      },
-      mouse = {
-        x: 0,
-        y: 0
-      },
-      parameters = {
-        start_time  : Date.now(),
-        time        : 0,
-        screenWidth : 0,
-        screenHeight: 0
-      };
-
-  window.rewards = {
-    merit: 1,
-    demerit: 1,
-  }
-
-  const glUtils = require('./glUtils');
-  const artist = require('./artist');
-  let utils = require('utils');
-  let TweenMax = require('gsap');
+'use strict'
+import 'babel-polyfill';
+import './console.nerf';
 
 
-  init();
+let canvas, gl, buffer, vertex_shader, fragment_shader, currentProgram, vertex_position;
 
-  function $ (sel) {
-    return document.querySelector(sel);
-  }
-  function $$ (sel) {
-    return document.querySelectorAll(sel);
-  }
+const DEF_FRAG = 'shader.frag';
+const DEF_VERT = 'shader.vert';
 
-  function init() {
-    canvas = document.getElementById( 'glcanvas' );
+let delayMouse = {
+  x: 0,
+  y: 0
+};
+let mouse = {
+  x: 0,
+  y: 0
+};
+let ctaDistance = {
+  x: 0,
+  y: 0
+};
+
+window.mouse = mouse;
+
+const TweenMax = require('gsap');
+const _ = require('lodash');
+
+const GLOBALS = require('./globals');
+
+const glUtils = require('./glUtils');
+const focusUtils = require('./window.focus.util');
+const artist = require('./artist');
+const Rewards = require('./rewards');
+const utils = require('./utils');
+const pageUI = require('./ui');
+
+const $ = utils.$;
+const $$ = utils.$$;
+
+let $score = $('#score');
+let screenShotCaptureMode = utils.getUrlVars('captureMode') || false;
+let learningUniforms = artist.learningUniforms;
+
+class ArtistRenderer {
+  constructor() {
+    this.parameters = {
+      seed: Math.random(),
+      start_time : Date.now(),
+      time : 0,
+      scrolly : 0,
+      screenWidth : 1,
+      screenHeight : 1,
+      pageHeight: 1,
+      pageWidth: 1
+    };
+
+    this.helpers = {
+      scrollDelta: 0,
+      scrollDistance: 0
+    }
+
+    canvas = this.constructCanvas();
+
     mouse.x = window.innerWidth/2;
     mouse.y = window.innerHeight/2;
+    delayMouse.x = window.innerWidth/2;
+    delayMouse.y = window.innerHeight/2;
 
-    gl = glUtils.setupWebGL(canvas, {preserveDrawingBuffer: !(utils.getUrlVars('learningmodeoff')) });
-    window.gl = gl;
+    gl = glUtils.setupWebGL(canvas, {preserveDrawingBuffer: screenShotCaptureMode});
+    //window.gl = gl;
 
     // THINK ABOUT A LARGER VERTEX BUFFER
     buffer = gl.createBuffer();
     gl.bindBuffer( gl.ARRAY_BUFFER, buffer );
-    gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( [ -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0 ] ), gl.STATIC_DRAW );
+
+    // Make a giant square to display fragment shader on
+    gl.bufferData( gl.ARRAY_BUFFER, new Float32Array([
+      -1.0, -1.0, 1.0,
+      -1.0, -1.0, 1.0,
+       1.0, -1.0, 1.0,
+       1.0, -1.0, 1.0
+    ]), gl.STATIC_DRAW );
 
     // Create GL Program
-    let fragShaderName = (getParameterByName('frag') || DEF_FRAG) + '.glsl';
-    let vertShaderName = (getParameterByName('vert') || DEF_VERT) + '.glsl';
+    let fragShaderName = (utils.getParameterByName('frag') || DEF_FRAG) + '.glsl';
+    let vertShaderName = (utils.getParameterByName('vert') || DEF_VERT) + '.glsl';
 
-    currentProgram = createProgram( `${fragShaderName}`, `${vertShaderName}` );
-    onWindowResize();
-    addEventListeners();
+    currentProgram = this.createProgram( `${fragShaderName}`, `${vertShaderName}` );
 
-    animate();
+    pageUI.shuffleMessages();
+    this.onWindowResize();
+    this.addEventListeners();
+    this.animate();
   }
-
-  function addEventListeners () {
-    window.addEventListener( 'resize', onWindowResize, false );
-    window.addEventListener( 'mousemove', onMouseMove, false );
-
-    window.addEventListener('keydown', function(event){
-      console.log('test', event);
-      if (event.keyCode === 38) {
-        increaseMerit('merit')();
-      } else if (event.keyCode === 40) {
-        decreaseMerit('merit')();
-      } else if (event.keyCode === 80) {
-        window.rewards.merit = 0;
-        panicButton();
-      }
-    });
-
-    $('#messages').addEventListener('click', function () {
-      TweenMax.to('#messages', 0.5, {bottom: '-600px'})
-    });
+  constructCanvas() {
+    var ele = document.createElement('canvas');
+    ele.id="glcanvas";
+    var refEle = $('body').children[0];
+    ele.setAttribute('style', 'height: 100vh; width: 100vw; position: fixed; top: 0; left: 0; z-index: -1;');
+    $('body').insertBefore(ele,refEle);
+    return ele;
   }
-  function panicButton () {
+  addEventListeners () {
+    window.addEventListener('load', this.onWindowResize.bind(this), false);
+    window.addEventListener('resize', this.onWindowResize.bind(this), false);
+    window.addEventListener('mousemove', this.onMouseMove.bind(this), false);
+    window.addEventListener('scroll', this.onMouseMove.bind(this), false);
+    window.addEventListener('main-cta-click', pageUI.shuffleMessages, false);
+    $('body').addEventListener('mouseleave', this.onMouseLeave.bind(this), false );
+    window.addEventListener('keydown', this.onKeyDown.bind(this));
+  }
+  onMouseLeave(event) {
+    Rewards.decreaseMerit();
+  }
+  onKeyDown(event) {
+    console.log('keypressed', event.keyCode);
+
+    if (event.keyCode === 38) { //UP ARROW
+      this.saveImage();
+      Rewards.increaseMerit();
+    } else if (event.keyCode === 40) { //DOWN ARROW
+      Rewards.decreaseMerit();
+    } else if (event.keyCode === 80) { //"P" KEY
+      this.panicButton();
+    }
+  }
+  onWindowResize(event) {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    this.parameters.screenWidth = canvas.width;
+    this.parameters.screenHeight = canvas.height;
+
+    let pageSize = utils.getBodyDimensions();
+
+    this.parameters.pageWidth = pageSize.width;
+    this.parameters.pageHeight = pageSize.height;
+
+    gl.viewport( 0, 0, canvas.width, canvas.height );
+  }
+  onMouseMove (event) {
+    let scroll = utils.getPageScroll();
+    if (typeof event.pageX !== 'undefined') {
+      this.helpers.scrollDistance = scroll.scrollY;
+      this.helpers.scrollDelta = scroll.scrollY - this.helpers.scrollDistance;
+      mouse = { x: event.pageX, y: event.pageY };
+    } else {
+      this.helpers.scrollDelta = scroll.scrollY - this.helpers.scrollDistance;
+      mouse.y = mouse.y + this.helpers.scrollDelta;
+      this.helpers.scrollDistance = scroll.scrollY;
+    }
+    //console.log(mouse);
+    window.mouse = mouse;
+  }
+  animate() {
+    requestAnimationFrame(this.animate.bind(this));
+    this.processDelayMouse();
+    this.processCTADistance();
+    this.render();
+  }
+  processCTADistance() {
+    let ctaPos = utils.getCTAPostition();
+    ctaDistance.x = ctaPos.x - delayMouse.x;
+    ctaDistance.y = ctaPos.y - delayMouse.y;
+    //console.log(ctaDistance);
+  }
+  processDelayMouse() {
+    delayMouse.x += (mouse.x-delayMouse.x)/16;
+    delayMouse.y += (mouse.y-delayMouse.y)/16;
+  }
+  saveImage() {
+    let imgData = canvas.toDataURL();
+    console.log('TODO: image saving not implemented.');
+    return;
+    fetch(GLOBALS.ROOT+'/goodpainting', {
+        method: 'POST',
+        body: imgData
+      })
+      .then(utils.checkStatus)
+      .then(utils.parseJSON)
+      .then(function (e,d) {
+        console.log(e,d);
+      })
+      .catch(function (e) {
+        console.error('Error:',e);
+      });
+  }
+  panicButton () {
     window.dispatchEvent(new Event('panic'));
   }
-  function increaseMerit (key) {
-    return function () {
-      if (rewards[key] < 0) rewards[key] = 0;
-      rewards[key]+=10;
-      window.dispatchEvent(new Event('learn'));
-    }
-  }
-  function decreaseMerit (key) {
-    return function () {
-      if ( rewards[key] > 0 ) {
-        rewards[key]=0;
-      } else {
-        rewards[key]-=5;
-      }
-      window.dispatchEvent(new Event('learn'));
-    }
-  }
-  function onMouseMove (event) {
-    mouse = { x: event.pageX, y: event.pageY };
-  }
 
-  function getParameterByName(name, url) {
-      if (!url) url = window.location.href;
-      url = url.toLowerCase(); // This is just to avoid case sensitiveness
-      name = name.replace(/[\[\]]/g, "\\$&").toLowerCase();// This is just to avoid case sensitiveness for query parameter name
-      var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
-          results = regex.exec(url);
-      if (!results) return null;
-      if (!results[2]) return '';
-      return decodeURIComponent(results[2].replace(/\+/g, " "));
-  }
-
-
-  function createProgram( vertex, fragment ) {
-
-    var program = gl.createProgram();
-
-    var vs = getShader(gl, vertex);
-    var fs = getShader(gl, fragment);
+  createProgram( vertex, fragment ) {
+    let program = gl.createProgram();
+    let vs = this.getShader(gl, vertex);
+    let fs = this.getShader(gl, fragment);
 
     if ( vs == null || fs == null ) return null;
 
@@ -139,25 +205,21 @@
 
     gl.linkProgram( program );
 
-    if ( !gl.getProgramParameter( program, gl.LINK_STATUS ) ) {
-
-      console.error(
-        "ERROR:\n" +
-        "VALIDATE_STATUS: " + gl.getProgramParameter( program, gl.VALIDATE_STATUS ) + "\n" +
-        "ERROR: " + gl.getError() + "\n\n" +
-        "- Vertex Shader -\n" + vertex + "\n\n" +
-        "- Fragment Shader -\n" + fragment
-      );
-
+    if ( !gl.getProgramParameter(program, gl.LINK_STATUS) ) {
+      console.error(`
+        ERROR:\n
+        VALIDATE_STATUS: ${gl.getProgramParameter(program, gl.VALIDATE_STATUS)}
+        ERROR: ${gl.getError()} \n
+        - Vertex Shader -  ${vertex} \n
+        - Fragment Shader -  ${fragment}
+      `);
       return null;
-
     }
 
     return program;
   }
 
-  function createShader( src, type ) {
-
+  createShader( src, type ) {
     var shader = gl.createShader( type );
 
     gl.shaderSource( shader, src );
@@ -171,32 +233,15 @@
     return shader;
   }
 
-  function onWindowResize( event ) {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    parameters.screenWidth = canvas.width;
-    parameters.screenHeight = canvas.height;
-
-    gl.viewport( 0, 0, canvas.width, canvas.height );
-  }
-
-  function animate() {
-    requestAnimationFrame( animate );
-    delayMouse.x += (mouse.x-delayMouse.x)/16;
-    delayMouse.y += (mouse.y-delayMouse.y)/16;
-    //console.log(delayMouse, mouse);
-    render();
-  }
-
-  function useUniforms (uniforms) {
-    uniforms.forEach(function (obj) {
-      gl.uniform1f( gl.getUniformLocation( currentProgram, obj.name ), obj.val );
+  useUniforms (uniforms) {
+    if (!uniforms) return;
+    uniforms.forEach(function (uniform, index) {
+      gl.uniform1f( gl.getUniformLocation( currentProgram, uniform.name ), uniform.val );
     })
   }
 
-  function getShader(gl, shaderID) {
-    var shaderScriptFile = require(`../shaders/${shaderID}`);
+  getShader(gl, shaderID) {
+    let shaderScriptFile = require(`../shaders/${shaderID}`);
 
     // Didn't find shader files. Abort.
     if (!shaderScriptFile) {
@@ -204,7 +249,7 @@
       return null;
     }
 
-    var shader;
+    let shader;
 
     if (shaderID.match('frag')) {
       shader = gl.createShader(gl.FRAGMENT_SHADER);
@@ -226,20 +271,53 @@
     return shader;
   }
 
-  function render() {
-
+  render() {
     if ( !currentProgram ) return;
+    let parameters = this.parameters;
 
-    parameters.time = ( Date.now() - parameters.start_time ) / 100000;
+    parameters.time = (Date.now() - parameters.start_time)/10000;
+    parameters.scrolly = window.scrollY / parameters.pageHeight;
+
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
     gl.useProgram( currentProgram );
 
-    useUniforms(learningUniforms);
+    if (typeof learningUniforms !== 'undefined') {
+      this.useUniforms(learningUniforms);
+    }
 
-    gl.uniform1f( gl.getUniformLocation( currentProgram, 'time' ), parameters.time  );
-    gl.uniform2f( gl.getUniformLocation( currentProgram, 'resolution' ), parameters.screenWidth, parameters.screenHeight );
-    gl.uniform2f( gl.getUniformLocation( currentProgram, 'mouse' ), mouse.x/parameters.screenWidth, (parameters.screenHeight-mouse.y)/parameters.screenHeight );
-    gl.uniform2f( gl.getUniformLocation( currentProgram, 'delayMouse' ), delayMouse.x/parameters.screenWidth, (parameters.screenHeight-delayMouse.y)/parameters.screenHeight );
+    var loc = gl.getUniformLocation(currentProgram, "mat");
+    var mat = [
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1,
+    ];
+    mat[5] = canvas.height/canvas.width;
+    gl.uniformMatrix4fv(loc, false, mat);
+
+    gl.uniform1f(
+      gl.getUniformLocation(currentProgram, 'time'),
+      parameters.time );
+
+    gl.uniform1f(
+      gl.getUniformLocation(currentProgram, 'seed'),
+      parameters.seed );
+
+    gl.uniform1f(
+      gl.getUniformLocation(currentProgram, 'scrolly'),
+      parameters.scrolly - 0.5);
+
+    gl.uniform2f(
+      gl.getUniformLocation(currentProgram, 'resolution'),
+      parameters.screenWidth, parameters.screenHeight );
+
+    gl.uniform2f(
+      gl.getUniformLocation(currentProgram, 'ctaDistance'),
+      ctaDistance.x/this.parameters.pageWidth, ctaDistance.y/this.parameters.pageHeight );
+
+    gl.uniform2f(
+      gl.getUniformLocation(currentProgram, 'delayMouse'),
+      delayMouse.x/parameters.screenWidth, (parameters.screenHeight-delayMouse.y)/parameters.screenHeight );
 
 
     gl.bindBuffer( gl.ARRAY_BUFFER, buffer );
@@ -248,13 +326,13 @@
     gl.drawArrays( gl.TRIANGLES, 0, 6 );
     gl.disableVertexAttribArray( vertex_position );
 
-    updateScore();
+    this.updateScore();
   }
 
-  function updateScore () {
-    $('#score').innerHTML = window.rewards.merit;
+  updateScore () {
+    $score.innerHTML = Rewards.reward;
   }
+}
 
 
-
-})(window, document);
+module.exports = new ArtistRenderer();

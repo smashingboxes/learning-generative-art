@@ -1,267 +1,316 @@
-;(function (window, document) {
+const _ = require('lodash');
+const utils = require('utils');
+const $ = utils.$;
+const $$ = utils.$$;
+const GLOBALS = require('./globals');
 
-const fetch = window.fetch || require('whatwg-fetch').fetch;
-//const Promise = Promise || require('es6-promise');
-
-var ValidationWorker = require("worker!./validation-worker");
-var validationWorker = new ValidationWorker();
-
-const ROOT = location.origin.replace('8080','3210');
-
-console.log(fetch, Promise);
-
-window.learningUniforms = generateUniforms();
-let deepqlearn = require('deepqlearn');
-let utils = require('utils');
 let TweenMax = require('gsap');
 
-const num_inputs = window.learningUniforms.length; // 9 eyes, each sees 3 numbers (wall, green, red thing proximity)
-const num_actions = getActions().length; // 5 possible angles agent can turn
-const temporal_window = 1; // amount of temporal memory. 0 = agent lives in-the-moment :)
-const network_size = num_inputs*temporal_window + num_actions*temporal_window + num_inputs;
+let Rewards = require('./rewards');
+let messageArtistBrain = require('./messageArtistBrain');
+let DEGREE = 0.001;
+let uniforms = null;
+
+let myArtist;
+let Actions;
+
+
 const AUTO_PAINT_CYCLES = 4;
+const PAINT_TIME = 1000;
+const ML_STATE_SAVE_COUNTER = 500;
+
+
+// let ValidationWorker = require('worker!./validation-worker');
+// let validationWorker = new ValidationWorker();
 
 let learnToPaintCycles = AUTO_PAINT_CYCLES;
-
-const PAINT_TIME = 400;
-
-
-// the value function network computes a value of taking any of the possible actions
-// given an input state. Here we specify one explicitly the hard way
-// but user could also equivalently instead use opt.hidden_layer_sizes = [20,20]
-// to just insert simple relu hidden layers.
-var layer_defs = [];
-layer_defs.push({type:'input', out_sx:1, out_sy:1, out_depth:network_size});
-layer_defs.push({type:'fc', num_neurons: 50, activation:'relu'});
-layer_defs.push({type:'fc', num_neurons: 50, activation:'relu'});
-layer_defs.push({type:'regression', num_neurons:num_actions});
-
-// options for the Temporal Difference learner that trains the above net
-// by backpropping the temporal difference learning rule.
-var tdtrainer_options = {learning_rate:0.001, momentum:0.0, batch_size:64, l2_decay:0.01};
-
-var opt = {};
-opt.temporal_window = temporal_window;
-opt.experience_size = 30000;
-opt.start_learn_threshold = 10;
-opt.gamma = 0.7;
-opt.learning_steps_total = 200000;
-opt.learning_steps_burnin = 30;
-opt.epsilon_min = 0.05;
-opt.epsilon_test_time = 0.05;
-opt.layer_defs = layer_defs;
-opt.tdtrainer_options = tdtrainer_options;
-
-var brain = new deepqlearn.Brain(num_inputs, num_actions, opt); // woohoo
+let SaveCounter = ML_STATE_SAVE_COUNTER;
+let LoadCounter = ML_STATE_SAVE_COUNTER;
 
 
-function generateUniforms () {
-  let limit = 10;
-  let _uniforms = [];
-  while ( limit-- ) {
-    _uniforms.push( { name: 'learning'+limit, index: limit, val: Math.random() } );
-  }
-  console.log(_uniforms);
-  return _uniforms;
-}
-
-function actionFactory (degree) {
-  return function () {
-    var r;
-    var p = new Promise(function (resolve) {
-      r = resolve;
-    });
-    TweenMax.to(this, PAINT_TIME/1000, {val: this.val + degree, onComplete: r});
-    return p;
-  }
-}
-
-function getActions () {
-  return window.learningUniforms.reduce(function (result, currentUniform, index) {
-    result.push( (actionFactory(-0.001)).bind(currentUniform) );
-    result.push( (actionFactory(0.001)).bind(currentUniform) );
-    result.push( (actionFactory(-0.1)).bind(currentUniform) );
-    result.push( (actionFactory(0.1)).bind(currentUniform) );
-    return result;
-  }, [function () {
-    //no action
-    //noop
-    return Promise.resolve();
-  }, panicFunction]);
-}
-
-function panicFunction () {
-  //crazy reset
-  window.learningUniforms.forEach(function (currentUniform, index) {
-    (function (degree) {
-      TweenMax.to(this, PAINT_TIME/500, {val: degree});
-    }).bind(currentUniform)(Math.random());
-  });
-
-  console.log('Crazy Reset!');
-
-  return new Promise(function (resolve, reject) {
-    setTimeout(function () {
-      resolve();
-    }, PAINT_TIME*2.1);
-  });
-}
-
-window.addEventListener('learn', function () {
-  console.log('learn!');
-  learnToPaint();
-}, false);
-
-window.addEventListener('panic', function () {
-  console.log('panic!');
-  panicFunction();
-}, false);
-
-
-function loadBrainFromJSON (data) {
-  //console.log('Brain Loaded');
-  brain.value_net.fromJSON( data ) //LOAD BRAIN;
-}
-
-function checkStatus(response) {
-  if (response.status >= 200 && response.status < 300) {
-    return response
-  } else {
-    let error = new Error(response.statusText)
-    error.response = response
-    throw error
-  }
-}
-
-function parseJSON(response) {
-  return response.json()
-}
-
-function justPaint() {
-  var action = brain.forward(window.learningUniforms.map(function (uni) {
-    return uni.val;
-  }));
-  getActions()[action]();
-  setTimeout(function () {
-    justPaint();
-  }, PAINT_TIME/4);
-}
-
-function getKeys(obj) {
-  let keys = [];
-  for (let key in obj) {
-    keys.push(key);
-  }
-  return keys;
-}
-
-function validateResult() {
-  let gl = window.gl;
-  if (!gl) return;
-
-  return new Promise(function (resolve, reject) {
-
-    validationWorker.onmessage = function(event) {
-      //console.log(event);
-      resolve(event.data[0]);
-    };
-
-    let pixels = new Uint8Array(gl.drawingBufferWidth * gl.drawingBufferHeight * 4);
-    gl.readPixels(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
-    validationWorker.postMessage([pixels]);
-  });
-}
-
-function learnToPaintLoop () {
-  validateResult()
-    .then(function (resultValidity) {
-      if ( resultValidity > 0.92 ) {
-        //Bad artist!
-        if (window.rewards.merit > 0) {
-          window.rewards.merit = 0;
-        } else {
-          window.rewards.merit -= 2;
-        }
-        if (resultValidity > 0.98) {
-          window.rewards.merit -= 10;
-        }
-        console.log('Bad Painting!', resultValidity, window.rewards.merit);
-      } else if ( resultValidity < 0.8 ) {
-        if (window.rewards.merit < 0) {
-          window.rewards.merit = 0;
-        }
-        console.log('Doing Better...', resultValidity, window.rewards.merit);
-      } else if ( resultValidity < 0.19 ) {
-        if (window.rewards.merit <= 0) {
-          window.rewards.merit = 1;
-        } else {
-          window.rewards.merit += 3;
-        }
-        console.log('Good Painting!', resultValidity, window.rewards.merit);
+class Artist {
+  addEventListeners() {
+    let context = this;
+    window.addEventListener('click', function (e) {
+      e.preventDefault();
+      if ( e.target == utils.getCTA()) {
+        window.dispatchEvent(new Event('main-cta-click'));
       }
-      requestAnimationFrame(learnToPaint);
-    })
-    .catch((e) => {
-      console.log(e);
+    }, false);
+
+    window.addEventListener('learn', function() {
+      console.log('learn!');
+      context.learnToPaint();
+    }, false);
+
+    window.addEventListener('panic', function() {
+      console.log('panic!');
+      context.panicFunction()
+        .then(function() {
+          context.learnToPaintLoop();
+        });
+    }, false);
+  }
+  generateUniforms() {
+    //TODO: Better names for uniforms
+    let limit = 10;
+    let _uniforms = [];
+    while ( limit-- ) {
+      _uniforms.push({
+        name: 'learning'+limit,
+        index: limit,
+        val: Math.random()
+      });
+    }
+    console.log(_uniforms);
+    return _uniforms;
+  }
+  panicFunction() {
+    //crazy reset
+    uniforms.forEach(function (currentUniform, index) {
+      (function (degree) {
+        TweenMax.set(this, {val: degree});
+      }).bind(currentUniform)(currentUniform.value + ((Math.random()-0.5)/100));
     });
-}
-function learnToPaint () {
-  if ( utils.getUrlVars('learningmodeoff') ) {
+
+    console.log('Panic Reset!');
+
+    return new Promise(function (resolve, reject) {
+      setTimeout(function() {
+        resolve();
+      }, PAINT_TIME*2.1);
+    });
+  }
+  actionFactory() {
+    return function() {
+      let resolver;
+      let p = new Promise(function (resolve) {
+        resolver = resolve;
+      });
+
+      TweenMax.set(this, {
+        val: this.val + (DEGREE)
+      });
+      resolver();
+      return p;
+    }
+  }
+  getActions() {
+    let context = this;
+    return uniforms.reduce(function (result, currentUniform, index) {
+      //Add action on the uniform to subtract by degree
+      result.push( (context.actionFactory(-DEGREE)).bind(currentUniform) );
+      //Add action on the uniform to add by degree
+      result.push( (context.actionFactory(DEGREE)).bind(currentUniform) );
+      return result;
+    }, [
+    function() {
+      if (DEGREE < 0.1) {
+        DEGREE * 10;
+      }
+      //console.log('change degree', DEGREE);
+      return Promise.resolve(DEGREE);
+    },
+    function() {
+      if (DEGREE > 0.0000001) {
+        DEGREE / 10;
+      }
+      //console.log('change degree', DEGREE);
+      return Promise.resolve(DEGREE);
+    },
+    function() {
+      //no action
+      return Promise.resolve('');
+    }
+    ]);
+  }
+  loadBrainFromJSON (data) {
+    //console.log('Brain Loaded', data);
+    if (data.layers) {
+      return messageArtistBrain('loadBrainFromJSON', [data]);
+    }
     return;
   }
+  getBrainInputs() {
+    let pageSize = utils.getBodyDimensions();
+    let pageScroll = utils.getPageScroll();
+    let cta = utils.getCTAPostition();
+    let inputs = [
+      Date.now()-Rewards.timePageLoad,
+      pageScroll.scrollX / pageSize.width,
+      pageScroll.scrollY / pageSize.height,
+      mouse.x / pageSize.width,
+      mouse.y / pageSize.height,
+      (cta.x / pageSize.width) - (mouse.x / pageSize.width),
+      (cta.y / pageSize.height) - (mouse.y / pageSize.height),
+      DEGREE,
+    ].concat(this.getLearningUniformsInputs());
 
-  var action = brain.forward(window.learningUniforms.map(function (uni) {
-    return uni.val;
-  }));
+    return inputs;
+  }
+  getLearningUniformsInputs() {
+    return this.learningUniforms.map(function (uni) {
+      return uni.val;
+    })
+  }
+  justPaint() {
+    var action = messageArtistBrain('forward', [this.getBrainInputs()]);
 
-  // action is a number in [0, num_actions) telling index of the action the agent chooses
-  getActions()[action]().then(function () {
+    Actions[action]();
+    setTimeout(function() {
+      justPaint();
+    }, PAINT_TIME/4);
+  }
+  validateResult() {
+    let gl = window.gl;
+    if (!gl) return;
 
-    // here, apply the action on environment and observe some reward. Finally, communicate it:
-    var r = brain.backward( window.rewards.merit ); // <-- learning magic happens here
+    return new Promise(function (resolve, reject) {
+      validationWorker.onmessage = function(event) {
+        //console.log(event);
+        resolve(event.data[0]);
+      };
 
-    console.log('Action index: ', action);
-
-    fetch(ROOT+'/memory', {
+      let pixels = new Uint8Array(Math.floor(gl.drawingBufferWidth * gl.drawingBufferHeight * 4));
+      gl.readPixels(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+      validationWorker.postMessage([pixels]);
+    });
+  }
+  learnToPaintLoop() {
+    let context = this;
+    requestAnimationFrame(context.learnToPaint.bind(context));
+  }
+  animateLearningUniforms() {
+    this.learningUniforms.forEach(function(learningUniform, index) {
+      TweenMax.to(learningUniform, 1, {val: uniforms[index].val});
+    });
+  }
+  learnToPaint() {
+    let context = this;
+    context.animateLearningUniforms();
+    if ( utils.getUrlVars('learningmodeoff') ) {
+      return;
+    }
+    if (LoadCounter > 0) {
+      LoadCounter--;
+      context.doPainting();
+      return;
+    }
+    LoadCounter = ML_STATE_SAVE_COUNTER;
+    context.fetchBrainJSON(function (data) {
+      if (data && !data[1]) {
+        console.error('Error', data);
+      }
+      context.doPainting();
+    });
+  }
+  doPainting() {
+    let context = this;
+    return messageArtistBrain('forward', [this.getBrainInputs()])
+      .then(function (messageData) {
+        let action = messageData[1];
+        //console.log('action', action);
+        // action is a number in [0, num_actions) telling index of the action the agent chooses
+        return context.Actions[action](action)
+          .then(function (out) {
+            //console.log('Action: ', action, out);
+            var reward = Rewards.calculateReward();
+            context.nextPaintingStep();
+            messageArtistBrain('backward', [reward])  // <-- learning magic happens here
+              .catch(function (e) {
+                console.error('Error', e);
+              });
+          });
+      });
+  }
+  nextPaintingStep() {
+    let context = this;
+    if (SaveCounter > 0) {
+      SaveCounter--;
+      context.doPaintCallback();
+      return Promise.resolve();
+    }
+    SaveCounter = ML_STATE_SAVE_COUNTER;
+    return messageArtistBrain('getJSONFromBrain')
+      .then(function (data) {
+        return context.postToMemory(data[1]);
+      });
+  }
+  postToMemory (value_net_json) {
+    let context = this;
+    return fetch(GLOBALS.ROOT+'/memory', {
         method: 'POST',
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(brain.value_net.toJSON())
+        body: value_net_json
       })
-      .then(checkStatus)
-      .then(parseJSON)
-      .then(loadBrainFromJSON)
-      .then(function () {
-        requestAnimationFrame(learnToPaintLoop);
-        requestAnimationFrame(artistLearnedFlash);
-      });
-
-  });
-
-}
-
-function artistLearnedFlash () {
-  TweenMax.to('#learned', 0.3, {scale: '1'});
-  TweenMax.to('#learned', 0.7, {scale: '0.01', delay: 0.2});
-}
-
-fetch(ROOT+'/brain/brain.json')
-  .then(checkStatus)
-  .then(parseJSON)
-  .then(loadBrainFromJSON)
-  .then(function () {
+      .then(utils.checkStatus)
+      .then(utils.parseJSON)
+      .then(context.loadBrainFromJSON)
+      .then(context.doPaintCallback.bind(context))
+      .catch(context.doPaintCallback.bind(context));
+  }
+  fetchBrainJSON (callback) {
+    let context = this;
+    return fetch(GLOBALS.ROOT+'/brain/brain.json')
+      .then(utils.checkStatus)
+      .then(utils.parseJSON)
+      .then(context.loadBrainFromJSON)
+      .then(callback)
+      .catch(callback);
+  }
+  doPaintCallback (e) {
+    //if (e) console.log(e);
+    let context = this;
+    requestAnimationFrame(context.learnToPaintLoop.bind(context));
+    requestAnimationFrame(context.artistLearnedFlash.bind(context));
+  }
+  artistLearnedFlash() {
+    TweenMax.to('#learned', 0.3, {scale: '1'});
+    TweenMax.to('#learned', 0.7, {scale: '0.01', delay: 0.2});
+  }
+  getStarted() {
+    let context = this;
     if ( utils.getUrlVars('learningmodeoff') ) {
-      justPaint();
-    } else {
-      learnToPaint();
+      return context.justPaint();
     }
-  })
-  .catch(function (err) {
-    console.log(err);
-  });
+    return context.learnToPaint();
+  }
 
-//learnToPaint();
+  constructor() {
+    let context = this;
 
-})(window, document);
+    context.learningUniforms = context.generateUniforms();
+    uniforms = context.learningUniforms.map(function (uniform) {
+      return {name: uniform.name, val: uniform.val};
+    });
+
+    context.Actions = context.getActions();
+
+    const num_inputs = context.getBrainInputs().length;
+    const num_actions = context.Actions.length;
+    const temporal_window = 20;
+    const network_size = num_inputs*temporal_window + num_actions*temporal_window + num_inputs;
+
+    this.addEventListeners();
+
+    messageArtistBrain('setup', [network_size, num_actions, num_inputs, temporal_window])
+      .then(function() {
+        context.fetchBrainJSON(function (data) {
+          if (data && !data[1]) {
+            console.error('Error', data);
+          }
+          context.getStarted();
+        });
+      })
+      .catch(function (e) {
+        console.error(e);
+      });
+  }
+}
+
+
+myArtist = new Artist();
+module.exports = myArtist;
