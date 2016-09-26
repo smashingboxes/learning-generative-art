@@ -27,6 +27,9 @@ class Utils {
   static getCTA() {
     return Utils.$('a[href*="/contact"]');
   }
+  static matchesCTA(target) {
+    return target == Utils.$('a[href*="/contact"]');
+  }
   static getCTAPostition() {
     let ele = Utils.getCTA();
     let pos = ele.getBoundingClientRect();

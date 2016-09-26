@@ -32,8 +32,7 @@ class Artist {
   addEventListeners() {
     let context = this;
     window.addEventListener('click', function (e) {
-      e.preventDefault();
-      if ( e.target == utils.getCTA()) {
+      if (utils.matchesCTA(e.target)) {
         window.dispatchEvent(new Event('main-cta-click'));
       }
     }, false);

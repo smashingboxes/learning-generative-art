@@ -25,7 +25,7 @@ class Rewards {
         ctaInteraction.x = mouse.x;
         ctaInteraction.x = mouse.y;
         context.totalInteractions++;
-        if (e.target == utils.getCTA()) {
+        if (utils.matchesCTA(e.target)) {
           context.totalInteractions+=4;
         }
         context.timeSinceLastInteraction = Date.now()-context.timeSinceLastInteraction;
@@ -37,13 +37,13 @@ class Rewards {
     window.addEventListener('mouseover', function (e) {
       if (e.target.nodeName == 'A' || e.target.nodeName == 'BUTTON') {
         interactCounterHandle(e);
-        if (e.target == utils.getCTA()) {
+        if (utils.matchesCTA(e.target)) {
           context.totalInteractions+=1;
         }
       }
     }, false);
 
-    window.addEventListener('blur', function() {
+    $('body').addEventListener('blur', function() {
       this.timePageLoad = Date.now();
       interactTime = Math.max(interactTime-50,0);
     }, false);
@@ -51,7 +51,7 @@ class Rewards {
   calculateReward() {
     // seconds on page * 1, interactions * 15, scroll dist total * 10, num pages * 20, clicks contact * 200
     if ( true ) {
-      this.reward = this.userReward + Math.floor((Date.now()-this.timePageLoad)/(100*1000)) + Math.floor(this.interactTime) + (this.totalInteractions*15);
+      this.reward = this.userReward + Math.floor(this.interactTime) + (this.totalInteractions*15);
     }
     return this.reward;
   }

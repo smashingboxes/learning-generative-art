@@ -33,7 +33,7 @@ const focusUtils = require('./window.focus.util');
 const artist = require('./artist');
 const Rewards = require('./rewards');
 const utils = require('./utils');
-const pageUI = require('./ui');
+const pageUI = require('./pageUI');
 
 const $ = utils.$;
 const $$ = utils.$$;
@@ -60,7 +60,7 @@ class ArtistRenderer {
       scrollDistance: 0
     }
 
-    canvas = this.constructCanvas();
+    canvas = pageUI.getCanvasEle();
 
     mouse.x = window.innerWidth/2;
     mouse.y = window.innerHeight/2;
@@ -88,25 +88,15 @@ class ArtistRenderer {
 
     currentProgram = this.createProgram( `${fragShaderName}`, `${vertShaderName}` );
 
-    pageUI.shuffleMessages();
     this.onWindowResize();
     this.addEventListeners();
     this.animate();
-  }
-  constructCanvas() {
-    var ele = document.createElement('canvas');
-    ele.id="glcanvas";
-    var refEle = $('body').children[0];
-    ele.setAttribute('style', 'height: 100vh; width: 100vw; position: fixed; top: 0; left: 0; z-index: -1;');
-    $('body').insertBefore(ele,refEle);
-    return ele;
   }
   addEventListeners () {
     window.addEventListener('load', this.onWindowResize.bind(this), false);
     window.addEventListener('resize', this.onWindowResize.bind(this), false);
     window.addEventListener('mousemove', this.onMouseMove.bind(this), false);
     window.addEventListener('scroll', this.onMouseMove.bind(this), false);
-    window.addEventListener('main-cta-click', pageUI.shuffleMessages, false);
     $('body').addEventListener('mouseleave', this.onMouseLeave.bind(this), false );
     window.addEventListener('keydown', this.onKeyDown.bind(this));
   }
@@ -330,7 +320,7 @@ class ArtistRenderer {
   }
 
   updateScore () {
-    $score.innerHTML = Rewards.reward;
+    pageUI.updateScore();
   }
 }
 
