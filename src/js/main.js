@@ -2,7 +2,6 @@
 import 'babel-polyfill';
 import './console.nerf';
 
-
 let canvas, gl, buffer, vertex_shader, fragment_shader, currentProgram, vertex_position;
 
 const DEF_FRAG = 'shader.frag';

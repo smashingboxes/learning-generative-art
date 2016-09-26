@@ -1,4 +1,6 @@
-const utils = require('utils');
+require('assets/hud.css');
+
+const utils = require('./utils');
 const Rewards = require('./rewards');
 const $ = utils.$;
 const $$ = utils.$$;
