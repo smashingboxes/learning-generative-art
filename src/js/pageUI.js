@@ -11,11 +11,10 @@ class PageUI {
   static initUI() {
     $wrapper = document.createElement('div');
     $wrapper.id="glaHUD";
-    $wrapper.setAttribute('style', 'position: fixed; top: 0; right: 0; z-index: 1000;');
 
     $score = document.createElement('div');
     $score.id="scoreWrap";
-    $score.innerHTML = 'Artist Reward: <span id="score">0<\/span>';
+    PageUI.updateScore();
     $wrapper.appendChild($score);
 
     $learned = document.createElement('div');
@@ -29,7 +28,6 @@ class PageUI {
     var ele = document.createElement('canvas');
     ele.id="glcanvas";
     var refEle = $('body').children[0];
-    ele.setAttribute('style', 'height: 100vh; width: 100vw; position: fixed; top: 0; left: 0; z-index: -1;');
     $('body').insertBefore(ele,refEle);
     return ele;
   }
