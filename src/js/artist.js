@@ -7,25 +7,22 @@ const GLOBALS = require('./globals');
 let TweenMax = require('gsap');
 
 let Rewards = require('./rewards');
-let messageArtistBrain = require('./messageArtistBrain');
+let pageUI = require('./pageUI');
+let Memory = require('artist/memory');
+let messageArtistBrain = require('artist/messageArtistBrain');
+
 let DEGREE = 0.001;
 let uniforms = null;
-
 let myArtist;
 let Actions;
 
 
-const AUTO_PAINT_CYCLES = 4;
-const PAINT_TIME = 1000;
-const ML_STATE_SAVE_COUNTER = 500;
-
-
-// let ValidationWorker = require('worker!./validation-worker');
+// let ValidationWorker = require('worker!./artist/validation-worker');
 // let validationWorker = new ValidationWorker();
 
-let learnToPaintCycles = AUTO_PAINT_CYCLES;
-let SaveCounter = ML_STATE_SAVE_COUNTER;
-let LoadCounter = ML_STATE_SAVE_COUNTER;
+let learnToPaintCycles = GLOBALS.AUTO_PAINT_CYCLES;
+let SaveCounter = GLOBALS.ML_STATE_SAVE_COUNTER;
+let LoadCounter = GLOBALS.ML_STATE_SAVE_COUNTER;
 
 
 class Artist {
@@ -77,7 +74,7 @@ class Artist {
     return new Promise(function (resolve, reject) {
       setTimeout(function() {
         resolve();
-      }, PAINT_TIME*2.1);
+      }, GLOBALS.PAINT_TIME*2.1);
     });
   }
   actionFactory() {
@@ -123,7 +120,7 @@ class Artist {
     }
     ]);
   }
-  loadBrainFromJSON (data) {
+  loadBrainFromJSON(data) {
     //console.log('Brain Loaded', data);
     if (data.layers) {
       return messageArtistBrain('loadBrainFromJSON', [data]);
@@ -158,7 +155,7 @@ class Artist {
     Actions[action]();
     setTimeout(function() {
       justPaint();
-    }, PAINT_TIME/4);
+    }, GLOBALS.PAINT_TIME/4);
   }
   validateResult() {
     let gl = window.gl;
@@ -195,13 +192,13 @@ class Artist {
       context.doPainting();
       return;
     }
-    LoadCounter = ML_STATE_SAVE_COUNTER;
-    context.fetchBrainJSON(function (data) {
+    LoadCounter = GLOBALS.ML_STATE_SAVE_COUNTER;
+    Memory.fetchBrainJSON(function (data) {
       if (data && !data[1]) {
         console.error('Error', data);
       }
       context.doPainting();
-    });
+    }, context);
   }
   doPainting() {
     let context = this;
@@ -229,46 +226,17 @@ class Artist {
       context.doPaintCallback();
       return Promise.resolve();
     }
-    SaveCounter = ML_STATE_SAVE_COUNTER;
+    SaveCounter = GLOBALS.ML_STATE_SAVE_COUNTER;
     return messageArtistBrain('getJSONFromBrain')
       .then(function (data) {
-        return context.postToMemory(data[1]);
+        return Memory.postToMemory(data[1], context);
       });
-  }
-  postToMemory (value_net_json) {
-    let context = this;
-    return fetch(GLOBALS.ROOT+'/memory', {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: value_net_json
-      })
-      .then(utils.checkStatus)
-      .then(utils.parseJSON)
-      .then(context.loadBrainFromJSON)
-      .then(context.doPaintCallback.bind(context))
-      .catch(context.doPaintCallback.bind(context));
-  }
-  fetchBrainJSON (callback) {
-    let context = this;
-    return fetch(GLOBALS.ROOT+'/brain/brain.json')
-      .then(utils.checkStatus)
-      .then(utils.parseJSON)
-      .then(context.loadBrainFromJSON)
-      .then(callback)
-      .catch(callback);
   }
   doPaintCallback (e) {
     //if (e) console.log(e);
     let context = this;
     requestAnimationFrame(context.learnToPaintLoop.bind(context));
-    requestAnimationFrame(context.artistLearnedFlash.bind(context));
-  }
-  artistLearnedFlash() {
-    TweenMax.to('#learned', 0.3, {scale: '1'});
-    TweenMax.to('#learned', 0.7, {scale: '0.01', delay: 0.2});
+    requestAnimationFrame(pageUI.artistLearnedFlash.bind(context));
   }
   getStarted() {
     let context = this;
@@ -277,7 +245,6 @@ class Artist {
     }
     return context.learnToPaint();
   }
-
   constructor() {
     let context = this;
 
@@ -297,12 +264,12 @@ class Artist {
 
     messageArtistBrain('setup', [network_size, num_actions, num_inputs, temporal_window])
       .then(function() {
-        context.fetchBrainJSON(function (data) {
+        Memory.fetchBrainJSON(function (data) {
           if (data && !data[1]) {
             console.error('Error', data);
           }
           context.getStarted();
-        });
+        }, context);
       })
       .catch(function (e) {
         console.error(e);

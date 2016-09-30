@@ -24,6 +24,10 @@ class PageUI {
     var refEle = $('body').children[0];
     $('body').insertBefore($wrapper,refEle);
   }
+  static artistLearnedFlash() {
+    TweenMax.to('#learned', 0.3, {scale: '1'});
+    TweenMax.to('#learned', 0.7, {scale: '0.01', delay: 0.2});
+  }
   static constructCanvas() {
     var ele = document.createElement('canvas');
     ele.id="glcanvas";

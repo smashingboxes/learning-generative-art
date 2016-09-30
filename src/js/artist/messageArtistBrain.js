@@ -1,7 +1,7 @@
 let ArtistBrainWorker = initArtistWorker();
 
 function initArtistWorker() {
-  let ArtistBrain = require('worker?inline!./artist-brain');
+  let ArtistBrain = require('worker?inline!./brain-worker');
   let ArtistBrainWorker = new ArtistBrain();
   ArtistBrainWorker.onmessage = function(event) {
     //console.log('Message in Main', event);

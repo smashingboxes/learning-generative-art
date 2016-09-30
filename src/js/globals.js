@@ -2,5 +2,8 @@ let _ROOT = location.origin.match(/(localhost|generative-artist)/gi) ?  location
 const ROOT = _ROOT.replace('8080','3210');
 
 module.exports = {
-  ROOT:ROOT
+  ROOT: ROOT,
+  AUTO_PAINT_CYCLES: 4,
+  PAINT_TIME: 1000,
+  ML_STATE_SAVE_COUNTER: 500
 }

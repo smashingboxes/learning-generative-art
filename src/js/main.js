@@ -7,18 +7,9 @@ let canvas, gl, buffer, vertex_shader, fragment_shader, currentProgram, vertex_p
 const DEF_FRAG = 'shader.frag';
 const DEF_VERT = 'shader.vert';
 
-let delayMouse = {
-  x: 0,
-  y: 0
-};
-let mouse = {
-  x: 0,
-  y: 0
-};
-let ctaDistance = {
-  x: 0,
-  y: 0
-};
+let delayMouse = { x: 0, y: 0 };
+let mouse = { x: 0, y: 0 };
+let ctaDistance = { x: 0, y: 0 };
 
 window.mouse = mouse;
 
@@ -46,7 +37,7 @@ class ArtistRenderer {
     this.parameters = {
       seed: Math.random(),
       start_time : Date.now(),
-      time : 0,
+      time : Math.floor( Date.now() * Math.random() ),
       scrolly : 0,
       screenWidth : 1,
       screenHeight : 1,
@@ -67,6 +58,7 @@ class ArtistRenderer {
     delayMouse.y = window.innerHeight/2;
 
     gl = glUtils.setupWebGL(canvas, {preserveDrawingBuffer: screenShotCaptureMode});
+    console.log(gl);
     //window.gl = gl;
 
     // THINK ABOUT A LARGER VERTEX BUFFER
