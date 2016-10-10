@@ -3,6 +3,7 @@ const utils = require('utils');
 const $ = utils.$;
 const $$ = utils.$$;
 const GLOBALS = require('./globals');
+const RNDUNIFORM = 1;
 
 let TweenMax = require('gsap');
 
@@ -55,7 +56,7 @@ class Artist {
       _uniforms.push({
         name: 'learning'+limit,
         index: limit,
-        val: Math.random()
+        val: (Math.random()*RNDUNIFORM)
       });
     }
     console.log(_uniforms);
