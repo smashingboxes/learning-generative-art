@@ -35,37 +35,37 @@ const vec4 color2 = vec4( 200./255., 34./255.,  93./255., 1. );
 const vec4 color3 = vec4(  43./255., 162./255., 245./255., 1. );
 const vec4 color4 = vec4( 148./255., 212./255., 229./255., 1. );
 const vec4 white = vec4( 1., 1., 1., 1. );
+
 vec4 colorRand = color2;
 
 float safeSin(float num) {
     return 0.5+(sin(num)/2.);
 }
 
-vec4 stripes(vec2 _uv, float modifyXColor, float modifyYColor)
+vec4 stripes(vec2 _uv, vec2 constUV, float modifyXColor, float modifyYColor)
 {
     vec4 stripeout = white;
 
-    if (mod(_uv.x, 4.0) > safeSin(learning8) &&
-        mod(_uv.x, 4.0) < safeSin(learning8)+0.23) {
-        stripeout = stripeout+color1;
+    float m7 = safeSin(learning7);
+    float m8 = safeSin(learning8);
+    float m9 = safeSin(learning9);
+
+    if (mod(_uv.x, 7.0) > (learning8) &&
+        mod(_uv.x, 7.0) < (learning8)+((learning7+constUV.y)*0.7)) {
+        stripeout = stripeout*(color1);
+        stripeout = stripeout+(color2*((scrolly+constUV.y)*m7));
+        stripeout = stripeout+(color3*((scrolly+constUV.y)*m8));
+        stripeout = stripeout+(color4*((scrolly+constUV.y)*m9));
     }
-    if (mod(_uv.x, 2.3) > safeSin(learning9) &&
-        mod(_uv.x, 2.3) < safeSin(learning9)+0.11) {
-        stripeout = (white+color2)*_uv.y;
-    }
-    if (mod(_uv.x*rawseed, 3.1) > safeSin(learning7) &&
-        mod(_uv.x*rawseed, 3.1) < safeSin(learning7)+0.51) {
-        stripeout = stripeout+(color2+colorRand+(colorRand.rrgg*_uv.xxyx));
-    }
 
-    stripeout = normalize(stripeout+(vec4( safeSin(learning8)/4., safeSin(_uv.y)/4., safeSin(_uv.x)/4., 0.2 )));
+    //stripeout = normalize(stripeout+(vec4( safeSin(learning8)/4., safeSin(_uv.y)/4., safeSin(_uv.x)/4., 0.2 )));
 
-    stripeout = stripeout-(_uv.y * modifyYColor)/4.;
-    stripeout = stripeout+(_uv.x * modifyXColor)/5.;
+    // stripeout = stripeout-(_uv.y * modifyYColor)/4.;
+    // stripeout = stripeout+(_uv.x * modifyXColor)/5.;
 
-    stripeout = stripeout+((color2/4.)*_uv.y);
+    stripeout = stripeout+(color2/4.0*_uv.y);
 
-    return normalize(stripeout);
+    return (stripeout);
 }
 float outClampFloat(float outVec, float mmax)
 {
@@ -108,8 +108,8 @@ void main()
     float mtime = safeSin((time+(seed))-(modifyTimeEffect*1.))+0.1;
     float mxtime = safeSin((time*modifyTimeEffect)+seed);
 
-    float sAng = sin( (time/5.)/hPI );
-    float cAng = cos( (time/5.)/hPI );
+    float sAng = sin( (delayMouseXMod-1.) * m9 * (sin(time) * 4.) / hPI );
+    float cAng = cos( (delayMouseXMod-1.) * m9 * (sin(time) * 4.) / hPI );
 
     mat3 rota = mat3(
         cAng, -sAng, 0.,
@@ -126,14 +126,16 @@ void main()
         0., 1., 0.,
         rawseed, scrollModSin/2., 1.
     );
-    float mmtime = safeSin(time)/10.;
+    float mmtime = safeSin(time*m8)/10.;
     mat3 scale = mat3(
-        1.+mmtime, 0., 0.,
-        0., 1.+mmtime, 0.,
+        1.5+mmtime, 0., 0.,
+        0., 1.5+mmtime, 0.,
         0., 0., 1.
     );
 
     vec2 uv = gl_FragCoord.xy / max(resolution.x, resolution.y);
+    vec2 constUV = gl_FragCoord.xy / max(resolution.x, resolution.y);
+
     uv = (vec3(uv, 1.) * scale).xy;
     uv = (vec3(uv, 1.) * trans2).xy;
 
@@ -152,8 +154,8 @@ void main()
     uv.x += sin(uv.y*(ctaMod.x)) - m8;
     uv.y += sin(uv.x*(ctaMod.y)) - m7;
 
-    uv.x *= sin(uvb.y + sin(m9) + cos(m8 * mtime));
-    uv.x += sin(uvb.x + sin(m8) + cos(m7 * mxtime));
+    //uv.x *= sin(uvb.y + sin(m9) + cos(m8 * mtime));
+    //uv.x += sin(uvb.x + sin(m8) + cos(m7 * mxtime));
     //uv.y += sin(uvb.x + m8);
 
     uv = (vec3(uv, 1.) * trans).xy;
@@ -163,7 +165,7 @@ void main()
     modifyYColor = modifyYColor * 4.;
 
 
-    vec4 outcolor = stripes(uv, modifyXColor, modifyYColor);
+    vec4 outcolor = stripes(uv, constUV, modifyXColor, modifyYColor);
 
     outcolor = outcolor + (white);
     gl_FragColor = outClamp(outcolor);

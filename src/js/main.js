@@ -24,6 +24,7 @@ const artist = require('./artist');
 const Rewards = require('./rewards');
 const utils = require('./utils');
 const pageUI = require('./pageUI');
+const TIMEMOD = 10000;
 
 const $ = utils.$;
 const $$ = utils.$$;
@@ -95,15 +96,16 @@ class ArtistRenderer {
     Rewards.decreaseMerit();
   }
   onKeyDown(event) {
-    console.log('keypressed', event.keyCode);
-
-    if (event.keyCode === 38) { //UP ARROW
-      this.saveImage();
-      Rewards.increaseMerit();
-    } else if (event.keyCode === 40) { //DOWN ARROW
-      Rewards.decreaseMerit();
-    } else if (event.keyCode === 80) { //"P" KEY
-      this.panicButton();
+    //console.log('keypressed', event.target.nodeName);
+    if (event.target.nodeName === 'BODY') {
+      if (event.keyCode === 38) { //UP ARROW
+        this.saveImage();
+        Rewards.increaseMerit();
+      } else if (event.keyCode === 40) { //DOWN ARROW
+        Rewards.decreaseMerit();
+      } else if (event.keyCode === 80) { //"P" KEY
+        this.panicButton();
+      }
     }
   }
   onWindowResize(event) {
@@ -256,7 +258,7 @@ class ArtistRenderer {
     if ( !currentProgram ) return;
     let parameters = this.parameters;
 
-    parameters.time = (Date.now() - parameters.start_time)/10000;
+    parameters.time = (Date.now() - parameters.start_time) / TIMEMOD;
     parameters.scrolly = window.scrollY / parameters.pageHeight;
 
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
