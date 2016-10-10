@@ -53,12 +53,12 @@ vec4 stripes(vec2 _uv, vec2 constUV, float modifyXColor, float modifyYColor)
     if (mod(_uv.x, 7.0) > (learning8) &&
         mod(_uv.x, 7.0) < (learning8)+(0.1+(m7*constUV.y)*0.2)) {
         stripeout = stripeout*(color1);
-        stripeout = stripeout+(color2*((safeSin(_uv.y)*4.0*scrolly)*m7));
-        stripeout = stripeout+(color3*((safeSin(_uv.y)*4.0*scrolly)*m8));
-        stripeout = stripeout+(color4*((safeSin(_uv.y)*4.0*scrolly)*m9));
+        stripeout = stripeout+(color2*(constUV.y*(_uv.y*scrolly)*m7));
+        stripeout = stripeout+(color3*(constUV.y*(_uv.y*scrolly)*m8));
+        stripeout = stripeout+(color4*(constUV.y*(_uv.y*scrolly)*m9));
     }
 
-    stripeout = stripeout+(color2/modifyXColor*constUV.y/modifyYColor);
+    stripeout = stripeout+((color2*modifyXColor*_uv.x*scrolly*modifyYColor*0.1));
 
     return (stripeout);
 }
@@ -103,6 +103,7 @@ void main()
     float mtime = safeSin((time+(seed))-(modifyTimeEffect*1.))+0.1;
     float mxtime = safeSin((time*modifyTimeEffect)+seed);
 
+    float mmtime = sin(time*m8)/5.;
     float sAng = sin( (scrolly * m9 * time) / hPI );
     float cAng = cos( (scrolly * m9 * time) / hPI );
 
@@ -114,14 +115,13 @@ void main()
     mat3 trans = mat3(
         1., 0., 0.,
         0., 1., 0.,
-        delayMouseXMod, delayMouseYMod, 1.
+        delayMouseXMod*mmtime, delayMouseYMod*mmtime, 1.
     );
     mat3 trans2 = mat3(
         1., 0., 0.,
         0., 1., 0.,
         rawseed+cos(time*0.002*m7), scrollModSin/2., 1.
     );
-    float mmtime = sin(time*m8)/5.;
     mat3 scale = mat3(
         1.2+mmtime, 0., 0.,
         0., 1.2+mmtime, 0.,
@@ -139,17 +139,17 @@ void main()
 
     vec2 uvb = vec2( pow(uv.x,2.0)+ctaMod.x, uv.y*ctaMod.y );
 
-    uv.x += (uvb.x * uvb.x * modifyExtra) * sin(seed2);
-    uv.y *= (uvb.y * uvb.y * modifyExtra);
+    //uv.x += (uvb.x * uvb.x * modifyExtra) * sin(seed2);
+    //uv.y *= (uvb.y * uvb.y * modifyExtra);
 
     //uv = (vec3(uv, 1.) * scale).xy;
 
-    uv.x += sin(uv.y*(ctaMod.x)) - m8;
-    uv.y += sin(uv.x*(ctaMod.y)) - m7;
+    uv.x += (sin(uv.y*(ctaMod.x)) - m8) * 0.1;
+    uv.y += (sin(uv.x*(ctaMod.y)) - m7) * 0.1;
 
-    uv.x *= sin(uvb.y + sin(m9) + cos(m8));
-    uv.x += sin(uvb.x + sin(m8) + cos(m7));
-    uv.y += sin(uvb.x + m8);
+    //uv.x *= sin(uvb.y + sin(m9) + cos(m8));
+    uv.x += (sin(uvb.x + sin(m8) + cos(m7))) * 0.1;
+    uv.y += (sin(uvb.x + m8)) * 0.9;
 
     uv = (vec3(uv, 1.) * trans).xy;
     uv = (vec3(uv, 1.) * rota).xy;
