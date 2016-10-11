@@ -59,7 +59,10 @@ class ArtistRenderer {
     delayMouse.y = window.innerHeight/2;
 
     gl = glUtils.setupWebGL(canvas, {preserveDrawingBuffer: screenShotCaptureMode});
-    console.log(gl);
+
+    if (!gl) {
+      return;
+    }
     //window.gl = gl;
 
     // THINK ABOUT A LARGER VERTEX BUFFER
