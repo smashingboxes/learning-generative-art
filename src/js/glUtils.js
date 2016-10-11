@@ -137,9 +137,8 @@
    */
   function setupWebGL(canvas, opt_attribs) {
     function showLink(str) {
-      var container = canvas.parentNode;
-      if (container) {
-        container.innerHTML = makeFailHTML(str);
+      if (window.console) {
+        console.error(str);
       }
     }
 
