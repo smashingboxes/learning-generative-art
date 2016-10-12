@@ -50,7 +50,7 @@ vec4 stripes(vec2 _uv, vec2 constUV, float modifyXColor, float modifyYColor)
     float m7 = safeSin(learning7);
     float m8 = safeSin(learning8);
     float m9 = safeSin(learning9);
-    float freq = 14.0;
+    float freq = 7.0 + (4.0*m9);
 
     float sAng = sin( (time * (0.2 * _uv.x / freq)) / hPI );
     float cAng = cos( (time * (0.2 * _uv.x / freq)) / hPI );
@@ -71,7 +71,7 @@ vec4 stripes(vec2 _uv, vec2 constUV, float modifyXColor, float modifyYColor)
         stripeout = stripeout+(color1);
     }
 
-    stripeout = stripeout+((color2*_uv.y*m7)*0.1);
+    stripeout = stripeout+((((color1*_uv.y)-(color4*_uv.x))*m7)*0.3);
 
     return (stripeout);
 }
