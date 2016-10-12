@@ -16,6 +16,7 @@ const int sections = 36;
 const float travelDist = 650.;
 const float hPI = 3.141592653589793 / 2.;
 const float timeEffectDampening = 100.;
+const float mouseEffectDampening = 0.0001;
 
 uniform float rawseed;
 
@@ -49,16 +50,29 @@ vec4 stripes(vec2 _uv, vec2 constUV, float modifyXColor, float modifyYColor)
     float m7 = safeSin(learning7);
     float m8 = safeSin(learning8);
     float m9 = safeSin(learning9);
+    float freq = 14.0;
 
-    if (mod(_uv.x, 7.0) > (learning8) &&
-        mod(_uv.x, 7.0) < (learning8)+(0.1+(m7*constUV.y)*0.2)) {
+    float sAng = sin( (time * (0.2 * _uv.x / freq)) / hPI );
+    float cAng = cos( (time * (0.2 * _uv.x / freq)) / hPI );
+    mat3 rota = mat3(
+        cAng, -sAng, 0.,
+        sAng, cAng, 0.,
+        0., 0., 1.
+    );
+    _uv = (vec3(_uv, 1.) * rota).xy;
+
+    if (mod(_uv.x, freq) > (learning8) &&
+        mod(_uv.x, freq) < (learning8)+(0.3+(m7*constUV.y)*0.7)) {
+
         stripeout = stripeout*(color1);
-        stripeout = stripeout+(color2*(constUV.y*(_uv.y*scrolly)*m7));
-        stripeout = stripeout+(color3*(constUV.y*(_uv.y*scrolly)*m8));
-        stripeout = stripeout+(color4*(constUV.y*(_uv.y*scrolly)*m9));
+        stripeout = stripeout-(color2*(_uv.y*m7));
+        stripeout = stripeout+(color3*(_uv.y*m8));
+        stripeout = stripeout+(color4*(_uv.y*m9));
+        stripeout = stripeout+(color1);
+        stripeout = normalize(stripeout);
     }
 
-    stripeout = stripeout+((color2*modifyXColor*_uv.x*scrolly*modifyYColor*0.1));
+    stripeout = stripeout+((color2*_uv.y*m7)*0.1);
 
     return (stripeout);
 }
@@ -78,6 +92,7 @@ void main()
 
     float modifyScroll = safeSin(learning0);
     float modifyTimeEffect = sin(learning1)/2.;
+    float modifyTimeEffectFlat = safeSin(learning1)+0.5;
 
     float modifyMouse = safeSin(learning2)/2.;
     float modifyCta = safeSin(learning3);
@@ -96,16 +111,16 @@ void main()
     float scrollMod = (scrolly*modifyScroll);
     float scrollModSin = safeSin(scrollMod+seed2);
 
-    vec2 ctaMod = ctaDistance*modifyMouse;
+    vec2 ctaMod = ctaDistance*modifyMouse*mouseEffectDampening;
 
-    float delayMouseXMod = delayMouse.x*(modifyMouse);
-    float delayMouseYMod = delayMouse.y*(modifyMouse);
+    float delayMouseXMod = delayMouse.x*(modifyMouse)*mouseEffectDampening;
+    float delayMouseYMod = delayMouse.y*(modifyMouse)*mouseEffectDampening;
     float mtime = safeSin((time+(seed))-(modifyTimeEffect*1.))+0.1;
-    float mxtime = safeSin((time*modifyTimeEffect)+seed);
+    float mxtime = safeSin(time*modifyTimeEffect);
 
     float mmtime = sin(time*m8)/5.;
-    float sAng = sin( (scrolly * m9 * time) / hPI );
-    float cAng = cos( (scrolly * m9 * time) / hPI );
+    float sAng = sin( (m9 * mxtime) / hPI );
+    float cAng = cos( (m9 * mxtime) / hPI );
 
     mat3 rota = mat3(
         cAng, -sAng, 0.,
@@ -120,11 +135,11 @@ void main()
     mat3 trans2 = mat3(
         1., 0., 0.,
         0., 1., 0.,
-        rawseed+cos(time*0.002*m7), scrollModSin/2., 1.
+        rawseed+(mxtime*0.0002*m7), scrollModSin/2., 1.
     );
     mat3 scale = mat3(
-        1.2+mmtime, 0., 0.,
-        0., 1.2+mmtime, 0.,
+        2.2+mxtime, 0., 0.,
+        0., 2.2+mxtime, 0.,
         0., 0., 1.
     );
 

@@ -52,6 +52,14 @@ class Artist {
     //TODO: Better names for uniforms
     let limit = 10;
     let _uniforms = [];
+    if (localStorage.uniforms) {
+      _uniforms = JSON.parse(localStorage.uniforms);
+      if (_uniforms[0].name) {
+        return _uniforms;
+      }
+      _uniforms = [];
+    }
+
     while ( limit-- ) {
       _uniforms.push({
         name: 'learning'+limit,
@@ -59,7 +67,7 @@ class Artist {
         val: (Math.random()*RNDUNIFORM)
       });
     }
-    console.log(_uniforms);
+    localStorage.setItem('uniforms', JSON.stringify(_uniforms));
     return _uniforms;
   }
   panicFunction() {
@@ -102,7 +110,7 @@ class Artist {
       return result;
     }, [
     function() {
-      if (DEGREE < 0.1) {
+      if (DEGREE < 0.01) {
         DEGREE * 10;
       }
       //console.log('change degree', DEGREE);
@@ -175,11 +183,13 @@ class Artist {
   }
   learnToPaintLoop() {
     let context = this;
-    requestAnimationFrame(context.learnToPaint.bind(context));
+    setTimeout(() => {
+      requestAnimationFrame(context.learnToPaint.bind(context));
+    }, GLOBALS.DEEP_LEARN_THROTTLE);
   }
   animateLearningUniforms() {
     this.learningUniforms.forEach(function(learningUniform, index) {
-      TweenMax.to(learningUniform, 1, {val: uniforms[index].val});
+      TweenMax.to(learningUniform, 1, {val: uniforms[index].val, ease: Linear.easeNone});
     });
   }
   learnToPaint() {
@@ -203,6 +213,9 @@ class Artist {
   }
   doPainting() {
     let context = this;
+    if (this.learningUniforms) {
+      localStorage.setItem('uniforms', JSON.stringify(this.learningUniforms));
+    }
     return messageArtistBrain('forward', [this.getBrainInputs()])
       .then(function (messageData) {
         let action = messageData[1];

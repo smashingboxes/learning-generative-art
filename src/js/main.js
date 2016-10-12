@@ -45,6 +45,11 @@ class ArtistRenderer {
       pageHeight: 1,
       pageWidth: 1
     };
+    if (localStorage.parameters) {
+      this.parameters = _.merge(this.parameters, JSON.parse(localStorage.parameters));
+    }
+
+    localStorage.setItem('parameters', JSON.stringify(this.parameters));
 
     this.helpers = {
       scrollDelta: 0,
@@ -60,7 +65,8 @@ class ArtistRenderer {
 
     gl = glUtils.setupWebGL(canvas, {preserveDrawingBuffer: screenShotCaptureMode});
 
-    if (!gl) {
+    if (!gl || !window.Worker || !window.localStorage) {
+      //Feature Detection
       return;
     }
     //window.gl = gl;
