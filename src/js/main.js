@@ -1,6 +1,7 @@
 'use strict'
 import 'babel-polyfill';
-import './console.nerf';
+import './lib/console.nerf';
+import './lib/eventListener.polyfill.js';
 
 let canvas, gl, buffer, vertex_shader, fragment_shader, currentProgram, vertex_position;
 
@@ -18,11 +19,11 @@ const _ = require('lodash');
 
 const GLOBALS = require('./globals');
 
-const glUtils = require('./glUtils');
-const focusUtils = require('./window.focus.util');
+const glUtils = require('./lib/glUtils');
+const focusUtils = require('./lib/window.focus.util');
 const artist = require('./artist');
 const Rewards = require('./rewards');
-const utils = require('./utils');
+const utils = require('./lib/utils');
 const pageUI = require('./pageUI');
 const TIMEMOD = 10000;
 
@@ -179,7 +180,7 @@ class ArtistRenderer {
       });
   }
   panicButton () {
-    window.dispatchEvent(new Event('panic'));
+    window.dispatchEvent(new CustomEvent('panic'));
   }
 
   createProgram( vertex, fragment ) {

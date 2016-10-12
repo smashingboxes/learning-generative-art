@@ -1,5 +1,5 @@
 const _ = require('lodash');
-const utils = require('../utils');
+const utils = require('../lib/utils');
 const GLOBALS = require('../globals');
 
 class ArtistMemory {

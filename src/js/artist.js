@@ -1,5 +1,5 @@
 const _ = require('lodash');
-const utils = require('utils');
+const utils = require('./lib/utils');
 const $ = utils.$;
 const $$ = utils.$$;
 const GLOBALS = require('./globals');
@@ -31,7 +31,7 @@ class Artist {
     let context = this;
     window.addEventListener('click', function (e) {
       if (utils.matchesCTA(e.target)) {
-        window.dispatchEvent(new Event('main-cta-click'));
+        window.dispatchEvent(new CustomEvent('main-cta-click'));
       }
     }, false);
 

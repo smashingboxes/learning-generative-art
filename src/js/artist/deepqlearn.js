@@ -2,7 +2,7 @@ var deepqlearn = deepqlearn || { REVISION: 'ALPHA' };
 (function(global) {
   "use strict";
   var convnetjs = require("convnetjs");
-  var cnnutil = require("cnnutil");
+  var cnnutil = require("./cnnutil");
 
   // An agent is in state0 and does action0
   // environment then assigns reward0 and provides new state, state1

@@ -1,5 +1,5 @@
 const _ = require('lodash');
-const utils = require('utils');
+const utils = require('./lib/utils');
 const $ = utils.$;
 const $$ = utils.$$;
 
@@ -57,12 +57,12 @@ class Rewards {
   }
   increaseMerit () {
     this.userReward+=10;
-    window.dispatchEvent(new Event('learn'));
+    window.dispatchEvent(new CustomEvent('learn'));
   }
   decreaseMerit (key) {
     this.userReward-=50;
     if (this.userReward<=0) this.userReward = 0;
-    window.dispatchEvent(new Event('learn'));
+    window.dispatchEvent(new CustomEvent('learn'));
   }
   resetRewards() {
     this.timePageLoad = Date.now();
