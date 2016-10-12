@@ -65,11 +65,10 @@ vec4 stripes(vec2 _uv, vec2 constUV, float modifyXColor, float modifyYColor)
         mod(_uv.x, freq) < (learning8)+(0.3+(m7*constUV.y)*0.7)) {
 
         stripeout = stripeout*(color1);
-        stripeout = stripeout-(color2*(_uv.y*m7));
-        stripeout = stripeout+(color3*(_uv.y*m8));
-        stripeout = stripeout+(color4*(_uv.y*m9));
+        stripeout = stripeout+(color2*(_uv.y*m7));
+        stripeout = stripeout/(color3*(_uv.y*m8));
+        stripeout = stripeout*(color4*(_uv.y*m9));
         stripeout = stripeout+(color1);
-        stripeout = normalize(stripeout);
     }
 
     stripeout = stripeout+((color2*_uv.y*m7)*0.1);

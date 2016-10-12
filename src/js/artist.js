@@ -184,6 +184,7 @@ class Artist {
   learnToPaintLoop() {
     let context = this;
     setTimeout(() => {
+      console.log('next paint.')
       requestAnimationFrame(context.learnToPaint.bind(context));
     }, GLOBALS.DEEP_LEARN_THROTTLE);
   }
