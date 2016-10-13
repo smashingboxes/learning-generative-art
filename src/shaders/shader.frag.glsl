@@ -43,7 +43,7 @@ float safeSin(float num) {
     return 0.5+(sin(num)/2.);
 }
 
-vec4 stripes(vec2 _uv, vec2 constUV, float modifyXColor, float modifyYColor)
+vec4 stripes(vec2 _uv, vec2 constUV, float ttime, float modifyXColor, float modifyYColor)
 {
     vec4 stripeout = white;
 
@@ -52,8 +52,8 @@ vec4 stripes(vec2 _uv, vec2 constUV, float modifyXColor, float modifyYColor)
     float m9 = safeSin(learning9);
     float freq = 7.0 + (4.0*m9);
 
-    float sAng = sin( (time * (0.2 * _uv.x / freq)) / hPI );
-    float cAng = cos( (time * (0.2 * _uv.x / freq)) / hPI );
+    float sAng = sin( (ttime * 20. * (0.2 * _uv.x / freq)) / hPI );
+    float cAng = cos( (ttime * 20. * (0.2 * _uv.x / freq)) / hPI );
     mat3 rota = mat3(
         cAng, -sAng, 0.,
         sAng, cAng, 0.,
@@ -88,6 +88,7 @@ vec4 outClamp(vec4 outcolor)
 void main()
 {
     colorRand = vec4( safeSin(learning6), 62./255., 134./255., 0.9 );
+    float ttime = (sin(time) + 1.) * 10.;
 
     float modifyScroll = safeSin(learning0);
     float modifyTimeEffect = sin(learning1)/2.;
@@ -114,10 +115,10 @@ void main()
 
     float delayMouseXMod = delayMouse.x*(modifyMouse)*mouseEffectDampening;
     float delayMouseYMod = delayMouse.y*(modifyMouse)*mouseEffectDampening;
-    float mtime = safeSin((time+(seed))-(modifyTimeEffect*1.))+0.1;
-    float mxtime = safeSin(time*modifyTimeEffect);
+    float mtime = safeSin((ttime+(seed))-(modifyTimeEffect*1.))+0.1;
+    float mxtime = safeSin(ttime*modifyTimeEffect);
 
-    float mmtime = sin(time*m8)/5.;
+    float mmtime = sin(ttime*m8)/5.;
     float sAng = sin( (m9 * mxtime) / hPI );
     float cAng = cos( (m9 * mxtime) / hPI );
 
@@ -172,7 +173,7 @@ void main()
     modifyYColor = modifyYColor * 4.;
 
 
-    vec4 outcolor = stripes(uv, constUV, modifyXColor, modifyYColor);
+    vec4 outcolor = stripes(uv, constUV, ttime, modifyXColor, modifyYColor);
 
     outcolor = outcolor + (white);
     gl_FragColor = outClamp(outcolor);

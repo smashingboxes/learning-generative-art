@@ -323,6 +323,7 @@ class ArtistRenderer {
   }
 
   updateScore () {
+    //console.log(this.parameters.time)
     pageUI.updateScore();
   }
 }
