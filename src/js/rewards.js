@@ -62,7 +62,7 @@ class Rewards {
   decreaseMerit (key) {
     this.userReward-=50;
     if (this.userReward<=0) this.userReward = 0;
-    window.dispatchEvent(new CustomEvent('learn'));
+    //window.dispatchEvent(new CustomEvent('learn'));
   }
   resetRewards() {
     this.timePageLoad = Date.now();

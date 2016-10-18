@@ -119,8 +119,8 @@ void main()
     float mxtime = safeSin(ttime*modifyTimeEffect);
 
     float mmtime = sin(ttime*m8)/5.;
-    float sAng = sin( (m9 * mxtime) / hPI );
-    float cAng = cos( (m9 * mxtime) / hPI );
+    float sAng = sin( (learning3) / hPI );
+    float cAng = cos( (learning3) / hPI );
 
     mat3 rota = mat3(
         cAng, -sAng, 0.,
