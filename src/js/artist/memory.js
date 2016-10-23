@@ -6,6 +6,11 @@ class ArtistMemory {
   static postToMemory(value_net_json, context) {
     if (value_net_json && window.localStorage) {
       localStorage.setItem('brain', value_net_json);
+
+      if (context.learningUniforms) {
+        localStorage.setItem('uniforms', JSON.stringify(context.learningUniforms));
+      }
+
       let resolve = context.loadBrainFromJSON(JSON.parse(value_net_json))
         .then(context.doPaintCallback.bind(context))
         .catch(context.doPaintCallback.bind(context));

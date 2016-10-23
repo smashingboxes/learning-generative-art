@@ -190,7 +190,7 @@ class Artist {
   }
   animateLearningUniforms() {
     this.learningUniforms.forEach(function(learningUniform, index) {
-      TweenMax.to(learningUniform, 1, {val: uniforms[index].val, ease: Linear.easeNone});
+      TweenMax.to(learningUniform, GLOBALS.PAINT_TIME, {val: uniforms[index].val, ease: Linear.easNone});
     });
   }
   learnToPaint() {
@@ -214,9 +214,6 @@ class Artist {
   }
   doPainting() {
     let context = this;
-    if (this.learningUniforms) {
-      localStorage.setItem('uniforms', JSON.stringify(this.learningUniforms));
-    }
     return messageArtistBrain('forward', [this.getBrainInputs()])
       .then(function (messageData) {
         let action = messageData[1];

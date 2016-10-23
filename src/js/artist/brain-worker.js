@@ -18,8 +18,8 @@ class ArtistBrain {
     opt.experience_size = 1000;
     opt.start_learn_threshold = 10;
     opt.gamma = 0.7;
-    opt.learning_steps_total = 2000000;
-    opt.learning_steps_burnin = 300;
+    opt.learning_steps_total = 200000;
+    opt.learning_steps_burnin = 30;
     opt.epsilon_min = 0.05;
     opt.epsilon_test_time = 0.05;
     opt.layer_defs = layer_defs;

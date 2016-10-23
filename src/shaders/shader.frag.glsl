@@ -135,7 +135,7 @@ void main()
     mat3 trans2 = mat3(
         1., 0., 0.,
         0., 1., 0.,
-        rawseed+(mxtime*0.0002*m7), scrollModSin/2., 1.
+        rawseed+(mxtime*0.0002*m7), -scrollModSin/2., 1.
     );
     mat3 scale = mat3(
         2.2+mxtime, 0., 0.,

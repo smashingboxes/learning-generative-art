@@ -17,6 +17,7 @@ window.mouse = mouse;
 const TweenMax = require('gsap');
 const _ = require('lodash');
 
+const versioning = require('./lib/versioning');
 const GLOBALS = require('./globals');
 
 const glUtils = require('./lib/glUtils');
