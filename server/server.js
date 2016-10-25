@@ -11,9 +11,13 @@ const PUBLIC_BRAIN = __dirname + '/../brain';
 
 app.use(bodyParser.json({limit: '50mb'}));
 app.use(bodyParser.text({limit: '50mb'}));
-app.use('/', express.static( PUBLIC, { maxAge: 31557600 } ));
+app.use('/', express.static( PUBLIC, { maxAge: 1000*60*60*24*30 } ));
 
 app.use(compression());
+app.use(function (req, res, next) {
+  console.log('request');
+  next();
+});
 
 app.use('/brain', express.static( PUBLIC_BRAIN, {
     setHeaders: function (res, path, stat) {
