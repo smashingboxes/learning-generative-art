@@ -3,6 +3,7 @@ const express = require('express');
 const redis = require('redis');
 const bodyParser = require('body-parser');
 const fs = require('fs');
+const compression = require('compression');
 const app = express();
 const PORT = 3210;
 const PUBLIC = __dirname + '/../dist';
@@ -10,7 +11,9 @@ const PUBLIC_BRAIN = __dirname + '/../brain';
 
 app.use(bodyParser.json({limit: '50mb'}));
 app.use(bodyParser.text({limit: '50mb'}));
-app.use('/', express.static( PUBLIC ));
+app.use('/', express.static( PUBLIC, { maxAge: 31557600 } ));
+
+app.use(compression());
 
 app.use('/brain', express.static( PUBLIC_BRAIN, {
     setHeaders: function (res, path, stat) {
