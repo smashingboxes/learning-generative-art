@@ -21,4 +21,4 @@ Run a development server at `http://localhost:8080/`. This also will watch & rec
 Watch files in `src/` for changes, recompile on change.
 
 #### `npm run deploy`
-This will deploy the master branch to the remote server (generative-artist.smashginboxes.com). You must have the proper SSH added to your `ssh-agent` in order to deploy. Do this with care, it affects the production instance.
+This will deploy the master branch to the remote server (generative-artist.smashginboxes.com). You must have the proper SSH key added to your `ssh-agent` in order to deploy. Do this with care, it affects the production instance.
