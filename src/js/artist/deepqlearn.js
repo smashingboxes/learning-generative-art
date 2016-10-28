@@ -141,8 +141,7 @@ var deepqlearn = deepqlearn || { REVISION: 'ALPHA' };
     policy: function(s) {
       // compute the value of doing any action in this state
       // and return the argmax action and its value
-      var svol = new convnetjs.Vol(1, 1, this.net_inputs);
-      svol.w = s;
+      var svol = new convnetjs.Vol(s);
       var action_values = this.value_net.forward(svol);
       var maxk = 0;
       var maxval = action_values.w[0];
@@ -248,8 +247,7 @@ var deepqlearn = deepqlearn || { REVISION: 'ALPHA' };
         for(var k=0;k < this.tdtrainer.batch_size;k++) {
           var re = convnetjs.randi(0, this.experience.length);
           var e = this.experience[re];
-          var x = new convnetjs.Vol(1, 1, this.net_inputs);
-          x.w = e.state0;
+          var x = new convnetjs.Vol(e.state0);
           var maxact = this.policy(e.state1);
           var r = e.reward0 + this.gamma * maxact.value;
           var ystruct = {dim: e.action0, val: r};
