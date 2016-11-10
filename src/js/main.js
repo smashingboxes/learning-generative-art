@@ -26,7 +26,7 @@ const artist = require('./artist');
 const Rewards = require('./rewards');
 const utils = require('./lib/utils');
 const pageUI = require('./pageUI');
-const TIMEMOD = 10000;
+const TIMEMOD = 25000;
 
 const $ = utils.$;
 const $$ = utils.$$;
@@ -269,7 +269,7 @@ class ArtistRenderer {
     if ( !currentProgram ) return;
     let parameters = this.parameters;
 
-    parameters.time = (Date.now() - parameters.start_time) / TIMEMOD;
+    parameters.time = Math.sin((Date.now() - parameters.start_time) / TIMEMOD);
     parameters.scrolly = window.scrollY / parameters.pageHeight;
 
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
