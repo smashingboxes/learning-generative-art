@@ -71,7 +71,6 @@ class ArtistRenderer {
       //Feature Detection
       return;
     }
-    //window.gl = gl;
 
     // THINK ABOUT A LARGER VERTEX BUFFER
     buffer = gl.createBuffer();
@@ -107,15 +106,21 @@ class ArtistRenderer {
     Rewards.decreaseMerit();
   }
   onKeyDown(event) {
-    //console.log('keypressed', event.target.nodeName);
+    console.log('keypressed', event.key, event);
     if (event.target.nodeName === 'BODY') {
-      if (event.keyCode === 38) { //UP ARROW
+      if (event.key === 'ArrowUp' && event.shiftKey === true) {
+        //UP ARROW
         this.saveImage();
         Rewards.increaseMerit();
-      } else if (event.keyCode === 40) { //DOWN ARROW
+      } else if (event.key === 'ArrowDown' && event.shiftKey === true) {
+        //DOWN ARROW
         Rewards.decreaseMerit();
-      } else if (event.keyCode === 80) { //"P" KEY
+      } else if (event.key === 'p' && event.ctrlKey === true) {
+        //"P" KEY
         this.panicButton();
+      } else if (event.key === 'H' && event.ctrlKey === true && event.shiftKey === true) {
+        //"H" KEY
+        pageUI.toggleHUD();
       }
     }
   }

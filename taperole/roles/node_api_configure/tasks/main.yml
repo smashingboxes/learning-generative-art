@@ -1,0 +1,6 @@
+- name: Install yarn
+  npm: name=yarn state=present global=yes
+
+- name: Install pm2
+  npm: name=pm2 state=present global=yes
+

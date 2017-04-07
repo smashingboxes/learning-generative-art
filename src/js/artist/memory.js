@@ -26,6 +26,7 @@ class ArtistMemory {
       .catch(context.doPaintCallback.bind(context));
   }
   static postToDataServer(value_net_json) {
+    console.log('Save brain.')
     return fetch(GLOBALS.ROOT+'/memory', {
       method: 'POST',
       headers: {
@@ -36,6 +37,7 @@ class ArtistMemory {
     });
   }
   static fetchBrainJSON(callback, context) {
+    console.log('Load brain.')
     if (window.localStorage && localStorage.getItem('brain')) {
       let value_net_json = localStorage.getItem('brain');
       let resolve = context.loadBrainFromJSON(JSON.parse(value_net_json))

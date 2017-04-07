@@ -1,6 +1,6 @@
 import featureDetection from './featureDetection';
 
-let version = '1.0.2'; // bump this number if you want to reset locally stored items
+let version = '1.0.3'; // bump this number if you want to reset locally stored items
 export default (function versioning() {
   if (!featureDetection.isSupportedDevice()) {
     console.log('Djarvis does not support this device.');

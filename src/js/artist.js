@@ -40,6 +40,10 @@ class Artist {
       context.learnToPaint();
     }, false);
 
+    window.addEventListener('userAdjustment', function(e) {
+      Artist.animateUniform(e.detail, e.detail.index);
+    }, false);
+
     window.addEventListener('panic', function() {
       console.log('panic!');
       context.panicFunction()
@@ -188,10 +192,13 @@ class Artist {
       requestAnimationFrame(context.learnToPaint.bind(context));
     }, GLOBALS.DEEP_LEARN_THROTTLE);
   }
+  static animateUniform(learningUniform, index) {
+    TweenMax.to(learningUniform, GLOBALS.PAINT_TIME, {overwrite: 'all', val: uniforms.find((v) => v.name === learningUniform.name).val, ease: Linear.easeNone});
+    //TweenMax.to(learningUniform, {val: uniforms.find((v) => v.name === learningUniform.name).val, ease: Linear.easeNone});
+  }
   animateLearningUniforms() {
-    this.learningUniforms.forEach(function(learningUniform, index) {
-      TweenMax.to(learningUniform, GLOBALS.PAINT_TIME, {val: uniforms[index].val, ease: Linear.easNone});
-    });
+    let context = this;
+    context.learningUniforms.forEach(Artist.animateUniform);
   }
   learnToPaint() {
     let context = this;
@@ -207,7 +214,7 @@ class Artist {
     LoadCounter = GLOBALS.ML_STATE_SAVE_COUNTER;
     Memory.fetchBrainJSON(function (data) {
       if (data && !data[1]) {
-        console.error('Error', data);
+        console.log('Error', data);
       }
       context.doPainting();
     }, context);
@@ -226,7 +233,7 @@ class Artist {
             context.nextPaintingStep();
             messageArtistBrain('backward', [reward])  // <-- learning magic happens here
               .catch(function (e) {
-                console.error('Error', e);
+                console.log('Error', e);
               });
           });
       });
@@ -261,8 +268,8 @@ class Artist {
     let context = this;
 
     context.learningUniforms = context.generateUniforms();
-    uniforms = context.learningUniforms.map(function (uniform) {
-      return {name: uniform.name, val: uniform.val};
+    uniforms = context.learningUniforms.map(function (uniform, i) {
+      return {name: uniform.name, val: uniform.val, index: i};
     });
 
     context.Actions = context.getActions();
@@ -278,13 +285,13 @@ class Artist {
       .then(function() {
         Memory.fetchBrainJSON(function (data) {
           if (data && !data[1]) {
-            console.error('Error', data);
+            console.log('Error', data);
           }
           context.getStarted();
         }, context);
       })
       .catch(function (e) {
-        console.error(e);
+        console.log(e);
       });
   }
 }

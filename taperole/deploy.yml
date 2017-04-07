@@ -1,0 +1,15 @@
+---
+- hosts: omnibox
+
+  tags:
+    - be_deploy
+
+  user: "{{ deployer_user.name }}"
+
+  vars_files:
+    - "{{tape_dir}}/vars/defaults.yml"
+    - tape_vars.yml
+
+  roles:
+    - nodeapp_deploy
+    - restart_node

@@ -1,0 +1,13 @@
+[production]
+djarvis.smashingboxes.com fe_app_env=production fe_app_branch=master
+
+[staging]
+djarvis-next.smashingboxes.com fe_app_env=production fe_app_branch=staging
+
+[vagrant]
+192.168.13.37 fe_app_env=production fe_app_branch=staging
+
+[omnibox:children]
+production
+staging
+vagrant

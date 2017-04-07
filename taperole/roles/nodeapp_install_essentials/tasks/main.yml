@@ -1,0 +1,8 @@
+- name: Register npm executable
+  command: bash -lc "which npm"
+  register: npm_path
+
+- name: Ensure yarn is installed
+  npm: name=yarn state=present global=yes executable="{{npm_path.stdout}}"
+  when: fe_app_repo is defined
+

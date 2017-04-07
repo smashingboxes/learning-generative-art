@@ -1,0 +1,53 @@
+- name: Enable nginx PPA
+  apt_repository: repo=ppa:nginx/stable
+  tags: [nginx]
+
+- name: Install nginx
+  apt: name=nginx state=present
+  tags: [nginx]
+
+- name: Ditch default nginx site enabled
+  file: path=/etc/nginx/sites-enabled/default state=absent
+  tags: [nginx]
+
+- name: Create /etc/nginx/ssl
+  file: path=/etc/nginx/ssl state=directory
+  tags: [nginx]
+
+# Staging SSL Configs
+- name: Create self signed SSL cert/key
+  command: bash -lc "openssl req -x509 -sha256 -nodes -newkey rsa:2048 -keyout self-signed.key -out self-signed.crt -subj '/CN=localhost'"
+  args:
+    chdir: /etc/nginx/ssl
+  tags: [nginx]
+  when: "'production' not in group_names"
+
+- name: Create Diffie Hellman Ephemeral Parameters (this will take some time)
+  command: bash -lc "openssl dhparam -out dhparam.pem 2048"
+  args:
+    chdir: /etc/nginx/ssl
+  tags: [nginx]
+  when: "'production' not in group_names"
+
+- name: Configure App nginx
+  template: src=nginx_node.j2 dest=/etc/nginx/sites-enabled/{{ app_name }}
+  tags: [nginx]
+
+- name: Install monit nginx config
+  template: src=nginx_monit.j2
+            dest=/etc/monit/conf-enabled/nginx
+            mode=u=rw,g=r,o=r
+  register: nginx_monit_config
+
+- name: Reload Monit
+  command: bash -lc "monit reload && sleep 2"
+  when: nginx_monit_config.changed
+
+- name: Stop nginx
+  service: name=nginx state=stopped
+  tags: [restart_nginx]
+
+- name: Start nginx
+  remote_user: "{{ deployer_user.name }}"
+  command: bash -lc "sudo monit start nginx"
+  tags: [restart_nginx]

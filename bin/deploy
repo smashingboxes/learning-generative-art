@@ -1,2 +1,2 @@
 #!/bin/bash
-ssh node@generative-artist.smashingboxes.com 'cd learning-generative-art && git fetch --all && git reset --hard origin/master && npm run build'
+ssh node@generative-artist.smashingboxes.com 'cd learning-generative-art && git fetch --all && git reset --hard origin/master && yarn run build'

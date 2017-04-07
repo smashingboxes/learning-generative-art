@@ -1,27 +1,21 @@
 #glaHUD {
   display: none;
-}
-#glcanvas {
-  height: 100vh;
-  width: 100vw;
+  background-color: rgba(0,0,0,0.7);
   position: fixed;
+  width: 100vw;
+  height: 100vh;
   top: 0;
-  left: 0;
-  z-index: -1;
+  right: 0;
+  z-index: 9999;
+  color: white;
 }
 #scoreWrap {
   font-size: 20px;
-  color: white;
-  background-color: rgba(255,0,0,0.7);
-  position: fixed;
-  top: 0;
-  right: 0;
   padding: 20px;
   z-index: 200;
 }
 #learned {
   font-size: 12;
-  background-color: rgba(0,0,0,0.7);
   bottom: 10px;
   right: 10px;
   width: 40px;
@@ -30,4 +24,30 @@
   position: fixed;
   z-index: 200;
   transform: scale(0.0001);
+}
+#learningUniforms {
+  padding: 20px;
+  box-sizing: border-box;
+  width: 100%;
+}
+#learningUniforms div {
+  display: flex;
+  align-items: center;
+  font-size: 18px;
+}
+#learningUniforms input {
+  font-size: 18px;
+  width: 45%;
+  margin: 10px 2%;
+  padding: 10px;
+  background-color: rgba(255,255,255,0.2);
+  border: 1px solid #fff;
+}
+#glcanvas {
+  height: 100vh;
+  width: 100vw;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: -1;
 }

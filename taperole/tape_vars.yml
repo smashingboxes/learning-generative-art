@@ -1,0 +1,8 @@
+app_name: djarvis
+
+# App Configs
+fe_app_repo: git@github.com:smashingboxes/learning-generative-art.git
+# fe_app_branch: staging
+# fe_app_path: learning-generative-art
+# be_app_path: learning-generative-art
+fe_build_command: yarn run build
