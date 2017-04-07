@@ -4,6 +4,11 @@ server {
 }
 
 server {
+  server_name generative-artist.smashingboxes.com;
+  return 301 https://djarvis.smashingboxes.com$request_uri;
+}
+
+server {
   listen 443 default deferred;
   ssl on;
 

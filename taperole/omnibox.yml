@@ -24,6 +24,7 @@
     - ufw
     - deployer_user
     - nodeapp_install_essentials
+    - letsencrypt
     - monit_install
     - nginx
     - node_api_configure
