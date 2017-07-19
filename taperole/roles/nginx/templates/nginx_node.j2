@@ -32,9 +32,9 @@ server {
 
   add_header Strict-Transport-Security "max-age=63072000; preload";
   add_header X-Frame-Options "DENY";
-  
+
   add_header 'Access-Control-Allow-Origin' 'https://smashingboxes.com';
-  
+
   return 301 https://djarvis.smashingboxes.com$request_uri;
 }
 {% endif %}
@@ -70,7 +70,6 @@ server {
 
   add_header Strict-Transport-Security "max-age=63072000; preload";
   add_header X-Frame-Options "DENY";
-  add_header Public-Key-Pins 'pin-sha256="klO23nT2ehFDXCfx3eHTDRESMz3asj1muO+4aIdjiuY="; pin-sha256="633lt352PKRXbOwf4xSEa1M517scpD3l5f79xMD9r9Q="; max-age=2592000;';
 
   add_header 'Access-Control-Allow-Origin' 'https://smashingboxes.com';
 
